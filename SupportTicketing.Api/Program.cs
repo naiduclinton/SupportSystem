@@ -31,8 +31,11 @@ builder.Services.AddTransient<IDbConnection>(_ =>
     if (connStr != null && (connStr.StartsWith("postgres://") || connStr.StartsWith("postgresql://")))
     {
         var uri = new Uri(connStr.Replace("postgres://", "http://").Replace("postgresql://", "http://"));
-        var userInfo = uri.UserInfo.Split(':');
-        connStr = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var host = uri.Host;
+        var port = uri.Port > 0 && uri.Port != 80 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+        connStr = $"Host={host};Port={port};Database={database};Username={userInfo[0]};Password={Uri.UnescapeDataString(userInfo[1])};SSL Mode=Require;Trust Server Certificate=true";
     }
 
     return new NpgsqlConnection(connStr);
