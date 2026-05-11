@@ -137,15 +137,21 @@ public class SetupController : ControllerBase
 
             var hash = BCrypt.Net.BCrypt.HashPassword(request.Password, BCrypt.Net.BCrypt.GenerateSalt(12));
 
-            // Use two queries to avoid Dapper enum mapping issue with RETURNING clause
+            // Insert user — cast role to text to avoid Dapper enum mapping issue
             await db.ExecuteAsync(@"
                 INSERT INTO users (id, email, full_name, role, is_active, password_hash, created_at, updated_at)
-                VALUES (gen_random_uuid(), @Email, @FullName, 'admin', true, @Hash, NOW(), NOW())
-                ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, full_name = EXCLUDED.full_name, role = EXCLUDED.role, is_active = EXCLUDED.is_active, updated_at = NOW();",
+                VALUES (gen_random_uuid(), @Email, @FullName, 'admin'::user_role, true, @Hash, NOW(), NOW())
+                ON CONFLICT (email) DO UPDATE SET
+                    password_hash = EXCLUDED.password_hash,
+                    full_name     = EXCLUDED.full_name,
+                    role          = EXCLUDED.role,
+                    is_active     = EXCLUDED.is_active,
+                    updated_at    = NOW();",
                 new { Email = request.Email, FullName = request.FullName, Hash = hash });
 
-            var result = await db.QueryFirstOrDefaultAsync(@"
-                SELECT id::text, email, full_name, role::text FROM users WHERE email = @Email;",
+            // Fetch result using text casts to avoid Dapper enum issues
+            var result = await db.QueryFirstOrDefaultAsync<dynamic>(@"
+                SELECT id::text, email, full_name AS fullName, role::text FROM users WHERE email = @Email;",
                 new { Email = request.Email });
 
             return Ok(new { message = "Admin user created.", email = result?.email, role = result?.role });
