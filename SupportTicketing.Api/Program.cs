@@ -77,9 +77,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // ── Repositories (scoped — one per HTTP request) ──────────────────────────
-builder.Services.AddScoped<ITicketRepository,       TicketRepository>();
-builder.Services.AddScoped<IUserRepository,         UserRepository>();
-builder.Services.AddScoped<ICustomerRepository,     CustomerRepository>();
+builder.Services.AddScoped<ITicketRepository,          TicketRepository>();
+builder.Services.AddScoped<IUserRepository,            UserRepository>();
+builder.Services.AddScoped<ICustomerRepository,        CustomerRepository>();
+builder.Services.AddScoped<ISlaPolicyRepository,       SlaPolicyRepository>();
+builder.Services.AddScoped<IAutomationRuleRepository,  AutomationRuleRepository>();
+builder.Services.AddScoped<INotificationRepository,    NotificationRepository>();
+builder.Services.AddScoped<ICommentRepository,         CommentRepository>();
 
 // ── Core services ─────────────────────────────────────────────────────────
 builder.Services.AddScoped<IAuthService,            AuthService>();
