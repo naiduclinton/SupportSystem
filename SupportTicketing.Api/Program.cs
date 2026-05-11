@@ -187,10 +187,6 @@ public static class MigrationHelper
         try
         {
             db.Open();
-            var tableCount = await db.ExecuteScalarAsync<int>(
-                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name='users'");
-            if (tableCount > 0) { app.Logger.LogInformation("Database already migrated."); return; }
-
             app.Logger.LogInformation("Running auto-migration...");
             var sql = new[]
             {
