@@ -128,6 +128,14 @@ builder.Services.AddCors(o => o.AddPolicy("Frontend", p =>
 var app = builder.Build();
 
 // ── Middleware pipeline ───────────────────────────────────────────────────
+// Remove host filtering middleware — Render's reverse proxy causes Host header mismatches
+var hostFilteringFeature = app.Services.GetService<Microsoft.AspNetCore.HostFiltering.IHostFilteringFeature>();
+app.Use(async (context, next) =>
+{
+    context.Features.Set<Microsoft.AspNetCore.HostFiltering.IHostFilteringFeature>(null);
+    await next();
+});
+
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
