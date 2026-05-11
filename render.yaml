@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: support-ticketing-api
+    runtime: docker
+    dockerfilePath: ./SupportTicketing.Api/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:80
+      - key: Jwt__Issuer
+        value: support-ticketing-api
+      - key: Jwt__Audience
+        value: support-ticketing-client
+      - key: Jwt__Secret
+        generateValue: true
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: support-ticketing-db
+          property: connectionString
+      - key: RabbitMq__Host
+        value: localhost
+
+  - type: web
+    name: support-ticketing-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    rootDir: SupportTicketing.Frontend
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://support-ticketing-api.onrender.com
+
+databases:
+  - name: support-ticketing-db
+    databaseName: support_ticketing
+    user: support_user
+    plan: free

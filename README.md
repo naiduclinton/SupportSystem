@@ -1,112 +1,110 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { authApi } from '../api'
-import { useAuth, useTheme } from '../store'
-import { Spinner } from '../components/ui'
+# SupportTicketing API
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
-  const navigate = useNavigate()
+ASP.NET Core 8 REST API for the support ticketing system.  
+**Stack:** C# · Dapper · PostgreSQL · RabbitMQ · JWT Auth
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      const data = await authApi.login(email, password)
-      login({
-        userId:       data.userId,
-        fullName:     data.fullName,
-        role:         data.role,
-        accessToken:  data.accessToken,
-        refreshToken: data.refreshToken,
-      })
-      navigate('/tickets')
-    } catch {
-      setError('Invalid email or password.')
-    } finally {
-      setLoading(false)
-    }
-  }
+---
 
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'var(--surface-1)' }}
-    >
-      <div style={{ width: 400 }}>
-        {/* Logo mark */}
-        <div className="flex flex-col items-center mb-8">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl mb-4"
-            style={{ background: 'var(--accent)' }}
-          >
-            <i className="fa-solid fa-headset" />
-          </div>
-          <h1 className="font-display font-semibold text-2xl tracking-tight" style={{ color: 'var(--ink)' }}>
-            SupportDesk
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-3)' }}>Sign in to your account</p>
-        </div>
+## Project structure
 
-        <div className="card p-8">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ink-2)' }}>
-                Email address
-              </label>
-              <input
-                className="input-base"
-                type="email"
-                autoComplete="email"
-                placeholder="you@company.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
-            </div>
+```
+SupportTicketing.sln
+├── SupportTicketing.Core/           # Domain — entities, interfaces, services (no infra deps)
+│   ├── Entities/                    # Ticket, User, Customer, Comment, ...
+│   ├── Enums/                       # TicketStatus, Priority, Role, ...
+│   ├── Interfaces/                  # IRepository<T>, ITicketService, ISlaService, ...
+│   ├── Models/                      # DTOs, request/response, event messages
+│   └── Services/                    # TicketService, SlaService, AutomationService
+│
+├── SupportTicketing.Infrastructure/ # Dapper repos, RabbitMQ bus, AuthService
+│   ├── Repositories/
+│   ├── Messaging/
+│   └── Services/
+│
+└── SupportTicketing.Api/            # ASP.NET controllers, middleware, DI wiring
+    ├── Controllers/
+    ├── Program.cs
+    ├── appsettings.json
+    └── Dockerfile
+```
 
-            <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ink-2)' }}>
-                Password
-              </label>
-              <input
-                className="input-base"
-                type="password"
-                autoComplete="current-password"
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
-            </div>
+---
 
-            {error && (
-              <div className="rounded-lg px-4 py-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400">
-                <i className="fa-solid fa-triangle-exclamation mr-2" />
-                {error}
-              </div>
-            )}
+## Quick start
 
-            <button
-              type="submit"
-              className="btn btn-primary w-full justify-center py-2.5"
-              disabled={loading}
-            >
-              {loading ? <Spinner size={16} /> : null}
-              Sign in
-            </button>
-          </form>
-        </div>
+### 1. Start infrastructure
 
-        <p className="text-center text-xs mt-4" style={{ color: 'var(--ink-3)' }}>
-          SupportDesk · Adapt IT
-        </p>
-      </div>
-    </div>
-  )
-}
+```bash
+docker-compose up postgres rabbitmq -d
+```
+
+The schema from `support_ticketing_schema.sql` is auto-applied on first run.
+
+### 2. Configure secrets
+
+Edit `SupportTicketing.Api/appsettings.json` or use dotnet user-secrets:
+
+```bash
+cd SupportTicketing.Api
+dotnet user-secrets set "Jwt:Secret" "your-strong-secret-min-32-chars"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;..."
+```
+
+### 3. Run the API
+
+```bash
+dotnet run --project SupportTicketing.Api
+```
+
+Swagger UI: http://localhost:5000/swagger
+
+---
+
+## API endpoints
+
+| Method | Route                              | Auth    | Description                    |
+|--------|------------------------------------|---------|--------------------------------|
+| POST   | /api/auth/login                    | Public  | Login → JWT tokens             |
+| POST   | /api/auth/refresh                  | Public  | Refresh access token           |
+| GET    | /api/tickets                       | Any     | Search/filter tickets (paged)  |
+| GET    | /api/tickets/{id}                  | Any     | Ticket detail + comments       |
+| POST   | /api/tickets                       | Any     | Create ticket                  |
+| PATCH  | /api/tickets/{id}/status           | Any     | Update status                  |
+| PATCH  | /api/tickets/{id}/assign           | Agent   | Assign to agent/team           |
+| POST   | /api/tickets/{id}/comments         | Any     | Add reply or internal note     |
+| DELETE | /api/tickets/{id}                  | Admin   | Soft delete                    |
+| GET    | /api/users                         | Agent+  | List agents                    |
+| GET    | /api/users/workloads               | Admin   | Agent workload stats           |
+| GET    | /api/reports/dashboard             | Agent+  | Dashboard summary stats        |
+| GET    | /api/reports/sla?from=&to=         | Agent+  | SLA compliance report          |
+| GET    | /api/reports/agents                | Agent+  | Per-agent performance          |
+| GET    | /api/notifications                 | Any     | Unread notifications           |
+| POST   | /api/notifications/mark-all-read   | Any     | Mark all notifications read    |
+
+---
+
+## RabbitMQ events
+
+Exchange: `tickets` (topic)
+
+| Routing key              | Payload                    | Consumer queues        |
+|--------------------------|----------------------------|------------------------|
+| `ticket.created`         | TicketCreatedEvent         | ticket.notifications   |
+| `ticket.status_changed`  | TicketStatusChangedEvent   | ticket.notifications   |
+| `ticket.sla_breached`    | SlaBreachEvent             | ticket.sla             |
+| `ticket.assigned`        | TicketAssignedEvent        | ticket.notifications   |
+
+RabbitMQ Management UI (dev): http://localhost:15672 (guest/guest)
+
+---
+
+## Design decisions
+
+- **SOLID principles** — each service/repository has a single responsibility; dependencies injected via interfaces
+- **Dapper over EF Core** — explicit SQL gives full control over query performance and PostgreSQL-specific features (ENUM casting, JSONB, views)
+- **Soft deletes** — `deleted_at` on all critical tables; data is never permanently destroyed
+- **RabbitMQ** — async event bus decouples notifications, SLA checks, and CSAT from the request path
+- **SLA background job** — `BackgroundService` evaluates breaches every minute; fires events on breach
+- **Business hours SLA** — pure C# calculation with configurable start/end times; no external scheduling deps
+- **JWT + bcrypt** — stateless auth with short-lived access tokens; refresh tokens tracked server-side
+- **Automation engine** — JSONB-stored conditions/actions evaluated at runtime; add rules without deploys
