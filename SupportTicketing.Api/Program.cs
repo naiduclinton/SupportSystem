@@ -109,9 +109,10 @@ builder.Services.AddSwaggerGen(c =>
 
 // ── CORS ──────────────────────────────────────────────────────────────────
 builder.Services.AddCors(o => o.AddPolicy("Frontend", p =>
-    p.WithOrigins(builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:3000" })
+    p.SetIsOriginAllowed(_ => true)
      .AllowAnyMethod()
-     .AllowAnyHeader()));
+     .AllowAnyHeader()
+     .AllowCredentials()));
 
 var app = builder.Build();
 
