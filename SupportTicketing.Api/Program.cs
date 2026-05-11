@@ -20,7 +20,20 @@ builder.Host.UseSerilog((ctx, lc) => lc
 
 // ── Database (Dapper / Npgsql) ─────────────────────────────────────────────
 builder.Services.AddTransient<IDbConnection>(_ =>
-    new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+                  ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+
+    // Convert postgres:// or postgresql:// URL to Npgsql format
+    if (connStr != null && (connStr.StartsWith("postgres://") || connStr.StartsWith("postgresql://")))
+    {
+        var uri = new Uri(connStr.Replace("postgres://", "http://").Replace("postgresql://", "http://"));
+        var userInfo = uri.UserInfo.Split(':');
+        connStr = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+    }
+
+    return new NpgsqlConnection(connStr);
+});
 
 // ── RabbitMQ ──────────────────────────────────────────────────────────────
 builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
