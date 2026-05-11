@@ -287,7 +287,9 @@ public class TicketRepository : ITicketRepository
               )";
 
         var rows = await _db.QueryAsync<dynamic>(sql);
-        return rows.Select(r => MapTicket(r)).ToList();
+        var tickets = new List<Ticket>();
+        foreach (var r in rows) tickets.Add(MapTicket(r));
+        return tickets;
     }
 
     public async Task<IEnumerable<Ticket>> GetByAssigneeAsync(Guid assigneeId, CancellationToken ct = default)
