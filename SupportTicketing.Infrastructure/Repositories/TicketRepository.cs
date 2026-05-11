@@ -201,7 +201,25 @@ public class TicketRepository : ITicketRepository
         parameters.Add("Offset", offset);
 
         var total = await _db.ExecuteScalarAsync<int>(countSql, parameters);
-        var items = await _db.QueryAsync<TicketSummary>(dataSql, parameters);
+        var rows = await _db.QueryAsync<dynamic>(dataSql, parameters);
+        var items = rows.Select(r => new TicketSummary
+        {
+            Id                         = r.id,
+            TicketNumber               = r.ticket_number ?? 0,
+            Subject                    = r.subject ?? string.Empty,
+            Status                     = r.status ?? "open",
+            Priority                   = r.priority ?? "medium",
+            CustomerName               = r.customer_name ?? string.Empty,
+            CustomerEmail              = r.customer_email ?? string.Empty,
+            AssigneeName               = r.assignee_name,
+            TeamName                   = r.team_name,
+            CategoryName               = r.category_name,
+            SlaBreached                = r.sla_breached ?? false,
+            SlaCompliancePct           = r.sla_compliance_pct,
+            ResolutionMinutesRemaining = r.resolution_minutes_remaining,
+            CreatedAt                  = r.created_at ?? DateTime.UtcNow,
+            UpdatedAt                  = r.updated_at ?? DateTime.UtcNow,
+        }).ToList();
 
         return new PagedResult<TicketSummary>(items, total, query.Page, query.PageSize);
     }
@@ -217,9 +235,9 @@ public class TicketRepository : ITicketRepository
                 (@Id, @Subject, @Description, @Status::ticket_status, @Priority::ticket_priority,
                  @Channel::ticket_channel, @CustomerId, @AssigneeId, @TeamId, @CategoryId, @SlaPolicyId,
                  @FirstResponseDueAt, @ResolutionDueAt, @ExternalRef, @Metadata::jsonb, @CreatedAt, @UpdatedAt)
-            RETURNING ticket_number";
+            RETURNING id, ticket_number, created_at, updated_at";
 
-        entity.TicketNumber = await _db.ExecuteScalarAsync<long>(sql, new
+        var result = await _db.QueryFirstAsync<dynamic>(sql, new
         {
             entity.Id, entity.Subject, entity.Description,
             Status   = ToSnakeCase(entity.Status.ToString()),
@@ -232,6 +250,7 @@ public class TicketRepository : ITicketRepository
             Metadata = entity.Metadata ?? "{}",
             entity.CreatedAt, entity.UpdatedAt
         });
+        entity.TicketNumber = result.ticket_number;
 
         return entity;
     }
