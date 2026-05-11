@@ -27,23 +27,24 @@ public record TicketSearchQuery(
     bool SortDesc = true
 );
 
-public record TicketSummary(
-    Guid Id,
-    long TicketNumber,
-    string Subject,
-    TicketStatus Status,
-    TicketPriority Priority,
-    string CustomerName,
-    string CustomerEmail,
-    string? AssigneeName,
-    string? TeamName,
-    string? CategoryName,
-    bool SlaBreached,
-    double? SlaCompliancePct,
-    double? ResolutionMinutesRemaining,
-    DateTime CreatedAt,
-    DateTime UpdatedAt
-);
+public class TicketSummary
+{
+    public Guid Id { get; set; }
+    public long TicketNumber { get; set; }
+    public string Subject { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Priority { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string CustomerEmail { get; set; } = string.Empty;
+    public string? AssigneeName { get; set; }
+    public string? TeamName { get; set; }
+    public string? CategoryName { get; set; }
+    public bool SlaBreached { get; set; }
+    public double? SlaCompliancePct { get; set; }
+    public double? ResolutionMinutesRemaining { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
 
 // ── Request models ────────────────────────────────────────────────────────
 public class CreateTicketRequest

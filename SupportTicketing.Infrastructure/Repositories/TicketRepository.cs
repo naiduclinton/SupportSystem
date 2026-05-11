@@ -133,7 +133,7 @@ public class TicketRepository : ITicketRepository
 
         var dataSql = $@"
             SELECT
-                t.id, t.ticket_number, t.subject, t.status, t.priority,
+                t.id, t.ticket_number, t.subject, t.status::text AS status, t.priority::text AS priority,
                 t.sla_breached, t.created_at, t.updated_at,
                 t.first_response_due_at, t.resolution_due_at,
                 c.full_name AS customer_name, c.email AS customer_email,
@@ -191,7 +191,7 @@ public class TicketRepository : ITicketRepository
             entity.CategoryId, entity.SlaPolicyId,
             entity.FirstResponseDueAt, entity.ResolutionDueAt,
             entity.ExternalRef,
-            Metadata  = "{}",
+            Metadata = entity.Metadata ?? "{}",
             entity.CreatedAt, entity.UpdatedAt
         });
 

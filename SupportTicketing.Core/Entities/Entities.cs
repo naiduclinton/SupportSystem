@@ -30,7 +30,7 @@ public class Customer : BaseEntity
     public string? Phone { get; set; }
     public string? Company { get; set; }
     public string? ExternalId { get; set; }
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public string Metadata { get; set; } = "{}";
 }
 
 public class Category : BaseEntity
@@ -75,7 +75,7 @@ public class Ticket : BaseEntity
     public bool SlaBreached { get; set; } = false;
 
     public string? ExternalRef { get; set; }
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public string Metadata { get; set; } = "{}";
 
     // Navigation
     public Customer? Customer { get; set; }
@@ -124,7 +124,11 @@ public class AutomationRule : BaseEntity
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
     public AutomationTrigger TriggerEvent { get; set; }
+    public string ConditionsJson { get; set; } = "[]";
+    public string ActionsJson { get; set; } = "[]";
+    [System.Text.Json.Serialization.JsonIgnore]
     public List<AutomationCondition> Conditions { get; set; } = new();
+    [System.Text.Json.Serialization.JsonIgnore]
     public List<AutomationAction> Actions { get; set; } = new();
     public int ExecutionOrder { get; set; } = 0;
 }
