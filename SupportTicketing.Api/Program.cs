@@ -12,6 +12,15 @@ using SupportTicketing.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Disable host filtering — allow requests from any host (required for Render deployment)
+builder.WebHost.ConfigureKestrel(options => { });
+builder.Services.Configure<Microsoft.AspNetCore.HostFiltering.HostFilteringOptions>(options =>
+{
+    options.AllowedHosts = new List<string> { "*" };
+    options.AllowEmptyHosts = true;
+    options.IncludeFailureMessage = false;
+});
+
 // ── Serilog ───────────────────────────────────────────────────────────────
 builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
