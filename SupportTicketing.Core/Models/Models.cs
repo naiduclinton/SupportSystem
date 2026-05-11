@@ -67,7 +67,7 @@ public class UpdateStatusRequest
 {
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TicketStatus Status { get; set; }
-    public Guid ActorUserId { get; set; }
+    public Guid? ActorUserId { get; set; }
     public string? Note { get; set; }
 }
 

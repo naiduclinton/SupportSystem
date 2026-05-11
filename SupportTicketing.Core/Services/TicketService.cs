@@ -89,7 +89,6 @@ public class TicketService : ITicketService
     {
         var ticket = await _tickets.GetByIdAsync(id, ct)
             ?? throw new KeyNotFoundException($"Ticket {id} not found.");
-
         var oldStatus = ticket.Status;
         ticket.Status = request.Status;
 

@@ -59,8 +59,8 @@ export const ticketsApi = {
   create: (dto: CreateTicketDto) =>
     api.post<Ticket>('/tickets', dto).then(r => r.data),
 
-  updateStatus: (id: string, status: string, actorUserId: string, note?: string) =>
-    api.patch<Ticket>(`/tickets/${id}/status`, { status, actorUserId, note }).then(r => r.data),
+  updateStatus: (id: string, status: string, actorUserId?: string, note?: string) =>
+    api.patch<Ticket>(`/tickets/${id}/status`, { status, note }).then(r => r.data),
 
   assign: (id: string, assigneeId?: string, teamId?: string, actorUserId?: string) =>
     api.patch<Ticket>(`/tickets/${id}/assign`, { assigneeId, teamId, actorUserId }).then(r => r.data),
