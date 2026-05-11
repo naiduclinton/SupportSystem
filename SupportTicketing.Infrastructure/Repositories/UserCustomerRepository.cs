@@ -1,4 +1,5 @@
 using System.Data;
+using SupportTicketing.Core.Enums;
 using Dapper;
 using SupportTicketing.Core.Entities;
 using SupportTicketing.Core.Interfaces;
