@@ -7,7 +7,7 @@ import type {
 
 // ── Axios instance ─────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: (typeof window !== 'undefined' && window.location.hostname === 'localhost') ? 'http://localhost:5000/api' : '/api',
   headers: { 'Content-Type': 'application/json' }
 })
 
