@@ -4,29 +4,38 @@ import type { TicketPriority, TicketStatus } from '../types'
 import { useToasts } from '../store'
 
 // ── Status badge ──────────────────────────────────────────────────────────
-const STATUS_CONFIG: Record<TicketStatus, { label: string; color: string }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   open:        { label: 'Open',        color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
+  Open:        { label: 'Open',        color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
   in_progress: { label: 'In Progress', color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
+  InProgress:  { label: 'In Progress', color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
   pending:     { label: 'Pending',     color: 'bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400' },
+  Pending:     { label: 'Pending',     color: 'bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400' },
   resolved:    { label: 'Resolved',    color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  Resolved:    { label: 'Resolved',    color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
   closed:      { label: 'Closed',      color: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' },
+  Closed:      { label: 'Closed',      color: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' },
 }
 
-export function StatusBadge({ status }: { status: TicketStatus }) {
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.open
+export function StatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG['open']
   return <span className={clsx('badge', cfg.color)}>{cfg.label}</span>
 }
 
 // ── Priority badge ────────────────────────────────────────────────────────
-const PRIORITY_CONFIG: Record<TicketPriority, { label: string; color: string; dot: string }> = {
+const PRIORITY_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   critical: { label: 'Critical', color: 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400',       dot: 'bg-red-500' },
+  Critical: { label: 'Critical', color: 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400',       dot: 'bg-red-500' },
   high:     { label: 'High',     color: 'bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400', dot: 'bg-orange-500' },
+  High:     { label: 'High',     color: 'bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400', dot: 'bg-orange-500' },
   medium:   { label: 'Medium',   color: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400', dot: 'bg-yellow-500' },
+  Medium:   { label: 'Medium',   color: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400', dot: 'bg-yellow-500' },
   low:      { label: 'Low',      color: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',     dot: 'bg-gray-400' },
+  Low:      { label: 'Low',      color: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',     dot: 'bg-gray-400' },
 }
 
-export function PriorityBadge({ priority }: { priority: TicketPriority }) {
-  const cfg = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG.low
+export function PriorityBadge({ priority }: { priority: string }) {
+  const cfg = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG['low']
   return (
     <span className={clsx('badge', cfg.color)}>
       <span className={clsx('w-1.5 h-1.5 rounded-full', cfg.dot)} />

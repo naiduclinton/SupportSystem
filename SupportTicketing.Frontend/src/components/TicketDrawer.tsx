@@ -7,12 +7,12 @@ import { useDrawer, useAuth, useToasts } from '../store'
 import { StatusBadge, PriorityBadge, Avatar, Spinner } from './ui'
 import type { TicketStatus } from '../types'
 
-const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
-  { value: 'open',        label: 'Open' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'pending',     label: 'Pending' },
-  { value: 'resolved',    label: 'Resolved' },
-  { value: 'closed',      label: 'Closed' },
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'Open',       label: 'Open' },
+  { value: 'InProgress', label: 'In Progress' },
+  { value: 'Pending',    label: 'Pending' },
+  { value: 'Resolved',   label: 'Resolved' },
+  { value: 'Closed',     label: 'Closed' },
 ]
 
 export default function TicketDrawer({ onUpdated }: { onUpdated: () => void }) {
@@ -31,7 +31,7 @@ export default function TicketDrawer({ onUpdated }: { onUpdated: () => void }) {
   )
 
   const statusMut = useMutation(
-    (status: TicketStatus) => ticketsApi.updateStatus(ticketId!, status, userId!),
+    (status: string) => ticketsApi.updateStatus(ticketId!, status, userId!),
     {
       onSuccess: () => { refetch(); onUpdated(); toast('Status updated', 'success') }
     }

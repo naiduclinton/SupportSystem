@@ -10,12 +10,12 @@ import NewTicketModal from '../components/NewTicketModal'
 import TicketDrawer from '../components/TicketDrawer'
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
-  { value: '',            label: 'All' },
-  { value: 'open',        label: 'Open' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'pending',     label: 'Pending' },
-  { value: 'resolved',    label: 'Resolved' },
-  { value: 'closed',      label: 'Closed' },
+  { value: '',           label: 'All' },
+  { value: 'Open',       label: 'Open' },
+  { value: 'InProgress', label: 'In Progress' },
+  { value: 'Pending',    label: 'Pending' },
+  { value: 'Resolved',   label: 'Resolved' },
+  { value: 'Closed',     label: 'Closed' },
 ]
 
 const PRIORITY_FILTERS: { value: string; label: string }[] = [
