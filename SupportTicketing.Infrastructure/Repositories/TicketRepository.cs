@@ -215,8 +215,8 @@ public class TicketRepository : ITicketRepository
             TeamName                   = r.team_name,
             CategoryName               = r.category_name,
             SlaBreached                = r.sla_breached ?? false,
-            SlaCompliancePct           = r.sla_compliance_pct,
-            ResolutionMinutesRemaining = r.resolution_minutes_remaining,
+            SlaCompliancePct           = r.sla_compliance_pct == null ? (double?)null : (double)r.sla_compliance_pct,
+            ResolutionMinutesRemaining = r.resolution_minutes_remaining == null ? (double?)null : (double)r.resolution_minutes_remaining,
             CreatedAt                  = r.created_at ?? DateTime.UtcNow,
             UpdatedAt                  = r.updated_at ?? DateTime.UtcNow,
         }).ToList();
