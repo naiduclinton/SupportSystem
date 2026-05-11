@@ -21,7 +21,10 @@ builder.Host.UseSerilog((ctx, lc) => lc
 // ── Database (Dapper / Npgsql) ─────────────────────────────────────────────
 builder.Services.AddTransient<IDbConnection>(_ =>
 {
-    var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+    // Read from multiple possible sources in priority order
+    var connStr = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                  ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
+                  ?? builder.Configuration.GetConnectionString("DefaultConnection")
                   ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
     // Convert postgres:// or postgresql:// URL to Npgsql format

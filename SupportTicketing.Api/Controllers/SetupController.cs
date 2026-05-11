@@ -18,8 +18,8 @@ public class SetupController : ControllerBase
 
     private IDbConnection GetConnection()
     {
-        var connStr = _config.GetConnectionString("DefaultConnection")
-                      ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+        var connStr = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                      ?? _config.GetConnectionString("DefaultConnection")
                       ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
         // Convert postgres:// URL format to Npgsql connection string if needed
@@ -38,8 +38,8 @@ public class SetupController : ControllerBase
     {
         try
         {
-            var rawConn = _config.GetConnectionString("DefaultConnection")
-                          ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            var rawConn = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                          ?? _config.GetConnectionString("DefaultConnection")
                           ?? Environment.GetEnvironmentVariable("DATABASE_URL")
                           ?? "NOT SET";
 
@@ -53,8 +53,8 @@ public class SetupController : ControllerBase
         }
         catch (Exception ex)
         {
-            var rawConn = _config.GetConnectionString("DefaultConnection")
-                          ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            var rawConn = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                          ?? _config.GetConnectionString("DefaultConnection")
                           ?? Environment.GetEnvironmentVariable("DATABASE_URL")
                           ?? "NOT SET";
             var masked = System.Text.RegularExpressions.Regex.Replace(rawConn, @"(?<=Password=|:[^@]{0,3})[^;@]+(?=;|@)", "***");
