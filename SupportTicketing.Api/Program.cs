@@ -10,7 +10,9 @@ using SupportTicketing.Infrastructure.Messaging;
 using SupportTicketing.Infrastructure.Repositories;
 using SupportTicketing.Infrastructure.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+// Pass AllowedHosts=* via args to override Render's host filtering before middleware runs
+var overrideArgs = args.Concat(new[] { "--AllowedHosts=*" }).ToArray();
+var builder = WebApplication.CreateBuilder(overrideArgs);
 
 // Disable host filtering — allow requests from any host (required for Render deployment)
 builder.WebHost.ConfigureKestrel(options => { });
