@@ -30,29 +30,44 @@ public class TicketRepository : ITicketRepository
                 t.first_response_due_at, t.resolution_due_at,
                 t.first_responded_at, t.resolved_at, t.closed_at,
                 t.sla_breached, t.external_ref, t.created_at, t.updated_at,
-                c.id, c.email, c.full_name, c.phone, c.company,
-                u.id, u.email, u.full_name, u.role::text AS role, u.is_active,
-                tm.id, tm.name
+                t.metadata
             FROM tickets t
-            JOIN customers c   ON c.id = t.customer_id
-            LEFT JOIN users u  ON u.id = t.assignee_id
-            LEFT JOIN teams tm ON tm.id = t.team_id
             WHERE t.id = @Id AND t.deleted_at IS NULL";
 
-        var result = await _db.QueryAsync<Ticket, Customer, User, Team, Ticket>(
-            sql,
-            (ticket, customer, user, team) =>
-            {
-                ticket.Customer = customer;
-                ticket.Assignee = user;
-                ticket.Team = team;
-                return ticket;
-            },
-            new { Id = id },
-            splitOn: "id,id,id");
+        var row = await _db.QueryFirstOrDefaultAsync<dynamic>(sql, new { Id = id });
+        if (row == null) return null;
 
-        return result.FirstOrDefault();
+        return MapTicket(row);
     }
+
+    private static Ticket MapTicket(dynamic row) => new Ticket
+    {
+        Id                  = row.id,
+        TicketNumber        = row.ticket_number ?? 0,
+        Subject             = row.subject ?? string.Empty,
+        Description         = row.description,
+        Status              = Enum.TryParse<Core.Enums.TicketStatus>(
+                                  ((string)(row.status ?? "open")).Replace("_",""), true, out var s) ? s : Core.Enums.TicketStatus.Open,
+        Priority            = Enum.TryParse<Core.Enums.TicketPriority>(
+                                  ((string)(row.priority ?? "medium")), true, out var p) ? p : Core.Enums.TicketPriority.Medium,
+        Channel             = Enum.TryParse<Core.Enums.TicketChannel>(
+                                  ((string)(row.channel ?? "portal")), true, out var ch) ? ch : Core.Enums.TicketChannel.Portal,
+        CustomerId          = row.customer_id ?? Guid.Empty,
+        AssigneeId          = row.assignee_id,
+        TeamId              = row.team_id,
+        CategoryId          = row.category_id,
+        SlaPolicyId         = row.sla_policy_id,
+        FirstResponseDueAt  = row.first_response_due_at,
+        ResolutionDueAt     = row.resolution_due_at,
+        FirstRespondedAt    = row.first_responded_at,
+        ResolvedAt          = row.resolved_at,
+        ClosedAt            = row.closed_at,
+        SlaBreached         = row.sla_breached ?? false,
+        ExternalRef         = row.external_ref,
+        Metadata            = row.metadata ?? "{}",
+        CreatedAt           = row.created_at ?? DateTime.UtcNow,
+        UpdatedAt           = row.updated_at ?? DateTime.UtcNow,
+    };
 
     public async Task<Ticket?> GetWithDetailsAsync(Guid id, CancellationToken ct = default)
     {
@@ -60,25 +75,38 @@ public class TicketRepository : ITicketRepository
         if (ticket is null) return null;
 
         const string commentSql = @"
-            SELECT co.*, u.*, cu.*
+            SELECT
+                co.id, co.ticket_id, co.author_user_id, co.author_customer_id,
+                co.comment_type::text AS comment_type, co.body, co.is_edited,
+                co.created_at, co.updated_at,
+                u.id AS u_id, u.full_name AS u_full_name, u.email AS u_email,
+                cu.id AS cu_id, cu.full_name AS cu_full_name, cu.email AS cu_email
             FROM comments co
             LEFT JOIN users u       ON u.id = co.author_user_id
             LEFT JOIN customers cu  ON cu.id = co.author_customer_id
             WHERE co.ticket_id = @Id AND co.deleted_at IS NULL
             ORDER BY co.created_at";
 
-        var comments = await _db.QueryAsync<Comment, User, Customer, Comment>(
-            commentSql,
-            (comment, user, customer) =>
-            {
-                comment.AuthorUser = user;
-                comment.AuthorCustomer = customer;
-                return comment;
-            },
-            new { Id = id },
-            splitOn: "id,id");
+        var rows = await _db.QueryAsync<dynamic>(commentSql, new { Id = id });
+        ticket.Comments = rows.Select(r => new Comment
+        {
+            Id               = r.id,
+            TicketId         = r.ticket_id,
+            AuthorUserId     = r.author_user_id,
+            AuthorCustomerId = r.author_customer_id,
+            CommentType      = Enum.TryParse<Core.Enums.CommentType>(
+                                   ((string)(r.comment_type ?? "reply")).Replace("_",""), true, out var ct2)
+                                   ? ct2 : Core.Enums.CommentType.Reply,
+            Body             = r.body ?? string.Empty,
+            IsEdited         = r.is_edited ?? false,
+            CreatedAt        = r.created_at ?? DateTime.UtcNow,
+            UpdatedAt        = r.updated_at ?? DateTime.UtcNow,
+            AuthorUser       = r.u_id == null ? null : new Core.Entities.User
+                               { Id = r.u_id, FullName = r.u_full_name ?? "", Email = r.u_email ?? "" },
+            AuthorCustomer   = r.cu_id == null ? null : new Core.Entities.Customer
+                               { Id = r.cu_id, FullName = r.cu_full_name, Email = r.cu_email ?? "" },
+        }).ToList();
 
-        ticket.Comments = comments.ToList();
         return ticket;
     }
 
@@ -240,7 +268,14 @@ public class TicketRepository : ITicketRepository
     public async Task<IEnumerable<Ticket>> GetOverdueSlaTicketsAsync(CancellationToken ct = default)
     {
         const string sql = @"
-            SELECT t.*, u.email AS assignee_email
+            SELECT
+                t.id, t.ticket_number, t.subject, t.description,
+                t.status::text AS status, t.priority::text AS priority,
+                t.channel::text AS channel, t.customer_id, t.assignee_id,
+                t.team_id, t.sla_policy_id, t.first_response_due_at,
+                t.resolution_due_at, t.first_responded_at, t.resolved_at,
+                t.closed_at, t.sla_breached, t.created_at, t.updated_at,
+                t.metadata, u.email AS assignee_email
             FROM tickets t
             LEFT JOIN users u ON u.id = t.assignee_id
             WHERE t.deleted_at IS NULL
@@ -251,7 +286,8 @@ public class TicketRepository : ITicketRepository
                  OR (t.first_response_due_at < NOW() AND t.first_responded_at IS NULL)
               )";
 
-        return await _db.QueryAsync<Ticket>(sql);
+        var rows = await _db.QueryAsync<dynamic>(sql);
+        return rows.Select(r => MapTicket(r));
     }
 
     public async Task<IEnumerable<Ticket>> GetByAssigneeAsync(Guid assigneeId, CancellationToken ct = default)
