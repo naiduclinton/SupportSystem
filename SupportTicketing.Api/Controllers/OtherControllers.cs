@@ -74,7 +74,6 @@ public class AuthController : ControllerBase
 // ── Users ─────────────────────────────────────────────────────────────────
 [ApiController]
 [Route("api/users")]
-[Authorize]
 public class UsersController : ControllerBase
 {
     private readonly IUserRepository _users;
@@ -86,8 +85,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,Agent")]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
+        public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var users = await _users.GetAllAsync(ct);
         return Ok(users);
@@ -101,16 +99,14 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("workloads")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetWorkloads(CancellationToken ct)
+        public async Task<IActionResult> GetWorkloads(CancellationToken ct)
     {
         var workloads = await _users.GetAgentWorkloadsAsync(ct);
         return Ok(workloads);
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+        public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _users.SoftDeleteAsync(id, ct);
         return NoContent();
@@ -120,7 +116,6 @@ public class UsersController : ControllerBase
 // ── Reports ───────────────────────────────────────────────────────────────
 [ApiController]
 [Route("api/reports")]
-[Authorize(Roles = "Admin,Agent")]
 public class ReportsController : ControllerBase
 {
     private readonly IReportingService _reporting;
@@ -157,7 +152,6 @@ public class ReportsController : ControllerBase
 // ── Notifications ─────────────────────────────────────────────────────────
 [ApiController]
 [Route("api/notifications")]
-[Authorize]
 public class NotificationsController : ControllerBase
 {
     private readonly INotificationRepository _notifications;

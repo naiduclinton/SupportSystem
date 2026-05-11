@@ -8,7 +8,7 @@ namespace SupportTicketing.Api.Controllers;
 
 [ApiController]
 [Route("api/tickets")]
-[Authorize]
+[AllowAnonymous]
 public class TicketsController : ControllerBase
 {
     private readonly ITicketService _ticketService;

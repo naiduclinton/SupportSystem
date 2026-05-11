@@ -10,6 +10,11 @@ using SupportTicketing.Infrastructure.Messaging;
 using SupportTicketing.Infrastructure.Repositories;
 using SupportTicketing.Infrastructure.Services;
 
+using SupportTicketing.Infrastructure;
+
+// Configure Dapper to handle PostgreSQL enum types
+DapperConfig.Configure();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Tell ASP.NET to allow any host — required for Render's reverse proxy
