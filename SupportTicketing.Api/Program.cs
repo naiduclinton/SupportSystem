@@ -101,7 +101,13 @@ builder.Services.AddScoped<INotificationService,    NotificationService>();
 builder.Services.AddHostedService<SlaEvaluationJob>();
 
 // ── Controllers + Swagger ─────────────────────────────────────────────────
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Allow string enum values (e.g. "high" instead of 2)
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
