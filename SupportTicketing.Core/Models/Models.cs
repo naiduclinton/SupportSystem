@@ -46,40 +46,48 @@ public record TicketSummary(
 );
 
 // ── Request models ────────────────────────────────────────────────────────
-public record CreateTicketRequest(
-    string Subject,
-    string? Description,
-    TicketPriority Priority,
-    TicketChannel Channel,
-    string CustomerEmail,
-    string? CustomerName,
-    Guid? CategoryId,
-    Guid? AssigneeId,
-    Guid? TeamId,
-    List<string>? Tags
-);
+public class CreateTicketRequest
+{
+    public string Subject { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public TicketPriority Priority { get; set; } = TicketPriority.Medium;
+    public TicketChannel Channel { get; set; } = TicketChannel.Portal;
+    public string CustomerEmail { get; set; } = string.Empty;
+    public string? CustomerName { get; set; }
+    public Guid? CategoryId { get; set; }
+    public Guid? AssigneeId { get; set; }
+    public Guid? TeamId { get; set; }
+    public List<string>? Tags { get; set; }
+}
 
-public record UpdateStatusRequest(
-    TicketStatus Status,
-    Guid ActorUserId,
-    string? Note = null
-);
+public class UpdateStatusRequest
+{
+    public TicketStatus Status { get; set; }
+    public Guid ActorUserId { get; set; }
+    public string? Note { get; set; }
+}
 
-public record AssignTicketRequest(
-    Guid? AssigneeId,
-    Guid? TeamId,
-    Guid ActorUserId
-);
+public class AssignTicketRequest
+{
+    public Guid? AssigneeId { get; set; }
+    public Guid? TeamId { get; set; }
+    public Guid ActorUserId { get; set; }
+}
 
-public record AddCommentRequest(
-    string Body,
-    CommentType CommentType,
-    Guid? AuthorUserId,
-    Guid? AuthorCustomerId
-);
+public class AddCommentRequest
+{
+    public string Body { get; set; } = string.Empty;
+    public CommentType CommentType { get; set; } = CommentType.Reply;
+    public Guid? AuthorUserId { get; set; }
+    public Guid? AuthorCustomerId { get; set; }
+}
 
 // ── Auth models ───────────────────────────────────────────────────────────
-public record LoginRequest(string Email, string Password);
+public class LoginRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+}
 
 public record AuthResult(
     string AccessToken,
