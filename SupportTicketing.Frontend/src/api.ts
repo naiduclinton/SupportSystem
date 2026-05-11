@@ -7,7 +7,7 @@ import type {
 
 // ── Axios instance ─────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL || '') + '/api',
+  baseURL: '/api',
   headers: { 'Content-Type': 'application/json' }
 })
 
