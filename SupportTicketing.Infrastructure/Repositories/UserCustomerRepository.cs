@@ -43,8 +43,23 @@ public class UserRepository : IUserRepository
 
     public async Task<IEnumerable<User>> GetAllAsync(CancellationToken ct = default)
     {
-        const string sql = "SELECT * FROM users WHERE deleted_at IS NULL ORDER BY full_name";
-        return await _db.QueryAsync<User>(sql);
+        const string sql = @"
+            SELECT id, email, full_name, role::text AS role, team_id,
+                   is_active, last_login_at, created_at, updated_at, deleted_at
+            FROM users WHERE deleted_at IS NULL ORDER BY full_name";
+        var rows = await _db.QueryAsync<dynamic>(sql);
+        return rows.Select(r => new User
+        {
+            Id           = r.id,
+            Email        = r.email,
+            FullName     = r.full_name ?? string.Empty,
+            Role         = Enum.Parse<UserRole>(r.role?.ToString() ?? "agent", true),
+            TeamId       = r.team_id,
+            IsActive     = r.is_active,
+            LastLoginAt  = r.last_login_at,
+            CreatedAt    = r.created_at,
+            UpdatedAt    = r.updated_at,
+        });
     }
 
     public async Task<User> AddAsync(User entity, CancellationToken ct = default)

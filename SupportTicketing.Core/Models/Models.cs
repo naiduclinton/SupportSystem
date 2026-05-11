@@ -51,7 +51,9 @@ public class CreateTicketRequest
 {
     public string Subject { get; set; } = string.Empty;
     public string? Description { get; set; }
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TicketPriority Priority { get; set; } = TicketPriority.Medium;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TicketChannel Channel { get; set; } = TicketChannel.Portal;
     public string CustomerEmail { get; set; } = string.Empty;
     public string? CustomerName { get; set; }
@@ -63,6 +65,7 @@ public class CreateTicketRequest
 
 public class UpdateStatusRequest
 {
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TicketStatus Status { get; set; }
     public Guid ActorUserId { get; set; }
     public string? Note { get; set; }
@@ -78,6 +81,7 @@ public class AssignTicketRequest
 public class AddCommentRequest
 {
     public string Body { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CommentType CommentType { get; set; } = CommentType.Reply;
     public Guid? AuthorUserId { get; set; }
     public Guid? AuthorCustomerId { get; set; }
