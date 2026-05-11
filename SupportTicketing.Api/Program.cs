@@ -10,17 +10,14 @@ using SupportTicketing.Infrastructure.Messaging;
 using SupportTicketing.Infrastructure.Repositories;
 using SupportTicketing.Infrastructure.Services;
 
-// Pass AllowedHosts=* via args to override Render's host filtering before middleware runs
-var overrideArgs = args.Concat(new[] { "--AllowedHosts=*" }).ToArray();
-var builder = WebApplication.CreateBuilder(overrideArgs);
+var builder = WebApplication.CreateBuilder(args);
 
-// Disable host filtering — allow requests from any host (required for Render deployment)
-builder.WebHost.ConfigureKestrel(options => { });
-builder.Services.Configure<Microsoft.AspNetCore.HostFiltering.HostFilteringOptions>(options =>
+// Tell ASP.NET to allow any host — required for Render's reverse proxy
+builder.WebHost.UseSetting("AllowedHosts", "*");
+builder.Services.Configure<Microsoft.AspNetCore.HostFiltering.HostFilteringOptions>(o =>
 {
-    options.AllowedHosts = new List<string> { "*" };
-    options.AllowEmptyHosts = true;
-    options.IncludeFailureMessage = false;
+    o.AllowedHosts = new List<string> { "*" };
+    o.AllowEmptyHosts = true;
 });
 
 // ── Serilog ───────────────────────────────────────────────────────────────
@@ -128,14 +125,6 @@ builder.Services.AddCors(o => o.AddPolicy("Frontend", p =>
 var app = builder.Build();
 
 // ── Middleware pipeline ───────────────────────────────────────────────────
-// Remove host filtering middleware — Render's reverse proxy causes Host header mismatches
-var hostFilteringFeature = app.Services.GetService<Microsoft.AspNetCore.HostFiltering.IHostFilteringFeature>();
-app.Use(async (context, next) =>
-{
-    context.Features.Set<Microsoft.AspNetCore.HostFiltering.IHostFilteringFeature>(null);
-    await next();
-});
-
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
