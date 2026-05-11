@@ -37,6 +37,12 @@ export default function TicketsPage() {
   const [search, setSearch] = useState('')
 
   const setParam = useCallback(<K extends keyof TicketSearchParams>(key: K, val: TicketSearchParams[K]) => {
+    // Convert PascalCase status to snake_case for API filter
+    if (key === 'status' && typeof val === 'string') {
+      const snake = val.replace(/([A-Z])/g, '_$1').replace(/^_/, '').toLowerCase()
+      setParams(p => ({ ...p, [key]: snake as any, page: 1 }))
+      return
+    }
     setParams(p => ({ ...p, [key]: val, page: 1 }))
   }, [])
 

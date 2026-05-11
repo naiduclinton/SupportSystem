@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Avatar, StatusBadge, PriorityBadge } from '../components/ui'
+import { Avatar } from '../components/ui'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend
+  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  BarChart, Bar
 } from 'recharts'
 
 // ── Reports ───────────────────────────────────────────────────────────────
@@ -19,7 +20,6 @@ export function ReportsPage() {
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <h1 className="font-display font-semibold text-lg mb-6" style={{ color: 'var(--ink)' }}>Reports</h1>
-
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
           { label: 'First response SLA', value: '96%',  sub: 'Target: 90%', color: '#10B981' },
@@ -34,7 +34,6 @@ export function ReportsPage() {
           </div>
         ))}
       </div>
-
       <div className="grid grid-cols-2 gap-4">
         <div className="card p-5">
           <h2 className="text-sm font-medium mb-4" style={{ color: 'var(--ink)' }}>SLA compliance trend</h2>
@@ -43,15 +42,11 @@ export function ReportsPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="week" tick={{ fontSize: 11, fill: 'var(--ink-3)' }} axisLine={false} tickLine={false} />
               <YAxis domain={[80, 100]} tick={{ fontSize: 11, fill: 'var(--ink-3)' }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
-                formatter={(v: number) => [`${v}%`, 'Compliance']}
-              />
+              <Tooltip contentStyle={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} formatter={(v: number) => [`${v}%`, 'Compliance']} />
               <Line type="monotone" dataKey="compliance" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4, fill: '#3B82F6' }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
-
         <div className="card p-5 flex flex-col">
           <h2 className="text-sm font-medium mb-4" style={{ color: 'var(--ink)' }}>SLA outcome breakdown</h2>
           <div className="flex-1 flex items-center justify-center">
@@ -59,9 +54,7 @@ export function ReportsPage() {
               <Pie data={PIE_DATA} cx={120} cy={80} innerRadius={50} outerRadius={75} dataKey="value" paddingAngle={3}>
                 {PIE_DATA.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
               </Pie>
-              <Tooltip
-                contentStyle={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
-              />
+              <Tooltip contentStyle={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 12, color: 'var(--ink-2)' }} />
             </PieChart>
           </div>
@@ -84,14 +77,40 @@ const STATUS_DOT: Record<string, string> = {
 }
 
 export function AgentsPage() {
+  const [showInvite, setShowInvite] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display font-semibold text-lg" style={{ color: 'var(--ink)' }}>Agents</h1>
-        <button className="btn btn-primary text-sm">
+        <button className="btn btn-primary text-sm" onClick={() => setShowInvite(true)}>
           <i className="fa-solid fa-plus text-xs" /> Invite agent
         </button>
       </div>
+
+      {showInvite && (
+        <div className="modal-backdrop" onClick={() => setShowInvite(false)}>
+          <div className="modal p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-semibold text-base">Invite agent</h2>
+              <button className="btn-ghost btn p-2" onClick={() => setShowInvite(false)}><i className="fa-solid fa-xmark" /></button>
+            </div>
+            <div className="mb-4">
+              <label className="block text-xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-2)' }}>Email address</label>
+              <input className="input-base" type="email" placeholder="agent@company.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
+            </div>
+            <div className="mb-4">
+              <label className="block text-xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-2)' }}>Role</label>
+              <select className="input-base"><option>Agent</option><option>Admin</option><option>Viewer</option></select>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button className="btn" onClick={() => setShowInvite(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => { alert(`Invitation sent to ${inviteEmail}`); setShowInvite(false); setInviteEmail('') }}>Send invite</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         {AGENTS.map(a => (
@@ -99,9 +118,7 @@ export function AgentsPage() {
             <div className="flex items-start gap-3">
               <div className="relative">
                 <Avatar name={a.fullName} size={40} />
-                <span
-                  className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-neutral-900 ${STATUS_DOT[a.status]}`}
-                />
+                <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-neutral-900 ${STATUS_DOT[a.status]}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">{a.fullName}</p>
@@ -110,18 +127,9 @@ export function AgentsPage() {
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-              <div className="text-center">
-                <p className="font-mono font-medium text-emerald-500">{a.csat}%</p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>CSAT</p>
-              </div>
-              <div className="text-center">
-                <p className="font-mono font-medium">{a.resolved}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>Resolved</p>
-              </div>
-              <div className="text-center">
-                <p className="font-mono font-medium">{a.avgHours}h</p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>Avg resolve</p>
-              </div>
+              <div className="text-center"><p className="font-mono font-medium text-emerald-500">{a.csat}%</p><p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>CSAT</p></div>
+              <div className="text-center"><p className="font-mono font-medium">{a.resolved}</p><p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>Resolved</p></div>
+              <div className="text-center"><p className="font-mono font-medium">{a.avgHours}h</p><p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>Avg resolve</p></div>
             </div>
           </div>
         ))}
@@ -143,6 +151,7 @@ const ARTICLES = [
 export function KbPage() {
   const [search, setSearch] = useState('')
   const filtered = ARTICLES.filter(a =>
+    !search ||
     a.title.toLowerCase().includes(search.toLowerCase()) ||
     a.category.toLowerCase().includes(search.toLowerCase())
   )
@@ -151,31 +160,16 @@ export function KbPage() {
     <div className="flex-1 overflow-y-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display font-semibold text-lg" style={{ color: 'var(--ink)' }}>Knowledge Base</h1>
-        <button className="btn btn-primary text-sm">
-          <i className="fa-solid fa-plus text-xs" /> New article
-        </button>
+        <button className="btn btn-primary text-sm"><i className="fa-solid fa-plus text-xs" /> New article</button>
       </div>
-
       <div className="relative mb-5" style={{ maxWidth: 360 }}>
         <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--ink-3)' }} />
-        <input
-          className="input-base pl-8"
-          placeholder="Search articles…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <input className="input-base pl-8" placeholder="Search articles…" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
-
       <div className="card overflow-hidden">
         <table className="data-table">
           <thead>
-            <tr>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Views</th>
-              <th>Last updated</th>
-              <th></th>
-            </tr>
+            <tr><th>Title</th><th>Category</th><th>Views</th><th>Last updated</th><th></th></tr>
           </thead>
           <tbody>
             {filtered.map(a => (
@@ -186,16 +180,10 @@ export function KbPage() {
                     <span className="text-sm font-medium">{a.title}</span>
                   </div>
                 </td>
-                <td>
-                  <span className="badge bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{a.category}</span>
-                </td>
+                <td><span className="badge bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{a.category}</span></td>
                 <td><span className="font-mono text-sm" style={{ color: 'var(--ink-2)' }}>{a.views.toLocaleString()}</span></td>
                 <td><span className="text-sm" style={{ color: 'var(--ink-3)' }}>{a.updated}</span></td>
-                <td>
-                  <button className="btn btn-ghost p-1.5 text-xs">
-                    <i className="fa-solid fa-pen-to-square" style={{ color: 'var(--ink-3)' }} />
-                  </button>
-                </td>
+                <td><button className="btn btn-ghost p-1.5 text-xs"><i className="fa-solid fa-pen-to-square" style={{ color: 'var(--ink-3)' }} /></button></td>
               </tr>
             ))}
           </tbody>
@@ -206,22 +194,37 @@ export function KbPage() {
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────
+const DEFAULT_SLA = [
+  { priority: 'Critical', first: '1 hour',   resolve: '4 hours',  firstMin: 60,   resolveMin: 240 },
+  { priority: 'High',     first: '4 hours',  resolve: '24 hours', firstMin: 240,  resolveMin: 1440 },
+  { priority: 'Medium',   first: '8 hours',  resolve: '72 hours', firstMin: 480,  resolveMin: 4320 },
+  { priority: 'Low',      first: '24 hours', resolve: '7 days',   firstMin: 1440, resolveMin: 10080 },
+]
+
+const DEFAULT_RULES = [
+  { name: 'Auto-assign by category',    active: true  },
+  { name: 'Escalate on SLA breach',     active: true  },
+  { name: 'Auto-close after 7 days idle', active: false },
+  { name: 'Send CSAT after resolution', active: true  },
+]
+
 export function SettingsPage() {
+  const [rules, setRules] = useState(DEFAULT_RULES)
+
+  const toggleRule = (idx: number) => {
+    setRules(r => r.map((rule, i) => i === idx ? { ...rule, active: !rule.active } : rule))
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <h1 className="font-display font-semibold text-lg mb-6" style={{ color: 'var(--ink)' }}>Settings</h1>
-
       <div className="max-w-xl flex flex-col gap-4">
+
         {/* SLA */}
         <div className="card p-5">
           <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--ink)' }}>SLA policies</h2>
           <div className="flex flex-col gap-3">
-            {[
-              { priority: 'Critical', first: '1 hour',   resolve: '4 hours'  },
-              { priority: 'High',     first: '4 hours',  resolve: '24 hours' },
-              { priority: 'Medium',   first: '8 hours',  resolve: '72 hours' },
-              { priority: 'Low',      first: '24 hours', resolve: '7 days'   },
-            ].map(p => (
+            {DEFAULT_SLA.map(p => (
               <div key={p.priority} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
                 <span className="text-sm font-medium">{p.priority}</span>
                 <div className="flex gap-6 text-sm" style={{ color: 'var(--ink-2)' }}>
@@ -237,20 +240,18 @@ export function SettingsPage() {
         <div className="card p-5">
           <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--ink)' }}>Automation rules</h2>
           <div className="flex flex-col gap-3">
-            {[
-              { name: 'Auto-assign by category',    active: true  },
-              { name: 'Escalate on SLA breach',     active: true  },
-              { name: 'Auto-close after 7 days idle', active: false },
-              { name: 'Send CSAT after resolution', active: true  },
-            ].map(r => (
+            {rules.map((r, i) => (
               <div key={r.name} className="flex items-center justify-between">
                 <span className="text-sm">{r.name}</span>
-                <span className={`badge text-[11px] ${r.active
-                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                }`}>
+                <button
+                  onClick={() => toggleRule(i)}
+                  className={`badge text-[11px] cursor-pointer ${r.active
+                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                    : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                  }`}
+                >
                   {r.active ? 'Active' : 'Inactive'}
-                </span>
+                </button>
               </div>
             ))}
           </div>

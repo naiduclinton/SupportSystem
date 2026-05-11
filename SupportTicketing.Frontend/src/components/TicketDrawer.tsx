@@ -47,7 +47,8 @@ export default function TicketDrawer({ onUpdated }: { onUpdated: () => void }) {
   const commentMut = useMutation(
     () => ticketsApi.addComment(ticketId!, replyBody, replyType, userId ?? undefined),
     {
-      onSuccess: () => { setReplyBody(''); refetch(); toast('Comment added', 'success') }
+      onSuccess: () => { setReplyBody(''); refetch(); toast('Comment added', 'success') },
+      onError: () => toast('Failed to add comment', 'error')
     }
   )
 
@@ -172,8 +173,8 @@ export default function TicketDrawer({ onUpdated }: { onUpdated: () => void }) {
               <div className="flex-1 overflow-y-auto p-5">
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   {[
-                    { label: 'Customer', value: ticket.customerName || ticket.customerEmail },
-                    { label: 'Email',    value: ticket.customerEmail },
+                    { label: 'Customer', value: (ticket as any).customer?.fullName || ticket.customerName || '—' },
+                    { label: 'Email',    value: (ticket as any).customer?.email || ticket.customerEmail || '—' },
                     { label: 'Channel',  value: ticket.channel },
                     { label: 'Category', value: ticket.categoryName ?? '—' },
                     { label: 'Team',     value: ticket.teamName ?? '—' },

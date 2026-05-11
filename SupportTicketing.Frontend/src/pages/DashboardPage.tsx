@@ -101,7 +101,7 @@ export default function DashboardPage() {
             <BarChart data={MOCK_CATEGORY} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--ink-3)' }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: 'var(--ink-3)' }} axisLine={false} tickLine={false} width={70} />
+              <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: 'var(--ink-3)' }} axisLine={false} tickLine={false} width={80} />
               <Tooltip
                 contentStyle={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
               />
