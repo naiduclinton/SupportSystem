@@ -6,6 +6,12 @@ using SupportTicketing.Core.Interfaces;
 
 namespace SupportTicketing.Infrastructure.Repositories;
 
+static class EnumHelper
+{
+    public static string ToSnake(string s)
+        => System.Text.RegularExpressions.Regex.Replace(s, "([A-Z])", "_$1").TrimStart('_').ToLower();
+}
+
 public class SlaPolicyRepository : ISlaPolicyRepository
 {
     private readonly IDbConnection _db;

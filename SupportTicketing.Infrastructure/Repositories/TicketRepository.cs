@@ -194,9 +194,9 @@ public class TicketRepository : ITicketRepository
         entity.TicketNumber = await _db.ExecuteScalarAsync<long>(sql, new
         {
             entity.Id, entity.Subject, entity.Description,
-            Status   = entity.Status.ToString().ToLower(),
-            Priority = entity.Priority.ToString().ToLower(),
-            Channel  = entity.Channel.ToString().ToLower(),
+            Status   = ToSnakeCase(entity.Status.ToString()),
+            Priority = ToSnakeCase(entity.Priority.ToString()),
+            Channel  = ToSnakeCase(entity.Channel.ToString()),
             entity.CustomerId, entity.AssigneeId, entity.TeamId,
             entity.CategoryId, entity.SlaPolicyId,
             entity.FirstResponseDueAt, entity.ResolutionDueAt,
@@ -223,8 +223,8 @@ public class TicketRepository : ITicketRepository
         await _db.ExecuteAsync(sql, new
         {
             entity.Id, entity.Subject, entity.Description,
-            Status   = entity.Status.ToString().ToLower(),
-            Priority = entity.Priority.ToString().ToLower(),
+            Status   = ToSnakeCase(entity.Status.ToString()),
+            Priority = ToSnakeCase(entity.Priority.ToString()),
             entity.AssigneeId, entity.TeamId, entity.CategoryId,
             entity.FirstRespondedAt, entity.ResolvedAt,
             entity.ClosedAt, entity.SlaBreached, entity.UpdatedAt
@@ -265,6 +265,9 @@ public class TicketRepository : ITicketRepository
 
         return await _db.QueryAsync<Ticket>(sql, new { AssigneeId = assigneeId });
     }
+
+    private static string ToSnakeCase(string s)
+        => System.Text.RegularExpressions.Regex.Replace(s, "([A-Z])", "_$1").TrimStart('_').ToLower();
 
     public async Task AssignTagsAsync(Guid ticketId, IEnumerable<Guid> tagIds, CancellationToken ct = default)
     {
