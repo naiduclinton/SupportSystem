@@ -40,7 +40,7 @@ public class TicketRepository : ITicketRepository
         return MapTicket(row);
     }
 
-    private static Ticket MapTicket(dynamic row) => new Ticket
+    private static Ticket MapTicket(dynamic row) { return new Ticket
     {
         Id                  = row.id,
         TicketNumber        = row.ticket_number ?? 0,
@@ -67,7 +67,7 @@ public class TicketRepository : ITicketRepository
         Metadata            = row.metadata ?? "{}",
         CreatedAt           = row.created_at ?? DateTime.UtcNow,
         UpdatedAt           = row.updated_at ?? DateTime.UtcNow,
-    };
+        }; }
 
     public async Task<Ticket?> GetWithDetailsAsync(Guid id, CancellationToken ct = default)
     {
