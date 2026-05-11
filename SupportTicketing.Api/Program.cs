@@ -59,6 +59,7 @@ builder.Services.AddScoped<IAuthService,            AuthService>();
 builder.Services.AddScoped<ITicketService,          TicketService>();
 builder.Services.AddScoped<ISlaService,             SlaService>();
 builder.Services.AddScoped<IAutomationService,      AutomationService>();
+builder.Services.AddScoped<INotificationService,    NotificationService>();
 
 // ── Background job: SLA breach evaluation (every minute) ─────────────────
 builder.Services.AddHostedService<SlaEvaluationJob>();

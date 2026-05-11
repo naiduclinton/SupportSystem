@@ -40,15 +40,11 @@ public class AutomationService : IAutomationService
     }
 
     private static bool EvaluateConditions(List<AutomationCondition> conditions, Ticket ticket)
-    {
-        // All conditions must pass (AND logic)
-        return conditions.All(c => EvaluateCondition(c, ticket));
-    }
+        => conditions.All(c => EvaluateCondition(c, ticket));
 
     private static bool EvaluateCondition(AutomationCondition condition, Ticket ticket)
     {
         var fieldValue = GetFieldValue(ticket, condition.Field)?.ToString() ?? string.Empty;
-
         return condition.Operator switch
         {
             "eq"       => string.Equals(fieldValue, condition.Value, StringComparison.OrdinalIgnoreCase),

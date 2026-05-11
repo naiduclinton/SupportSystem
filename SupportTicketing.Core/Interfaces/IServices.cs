@@ -1,4 +1,5 @@
 using SupportTicketing.Core.Entities;
+using SupportTicketing.Core.Enums;
 using SupportTicketing.Core.Models;
 
 namespace SupportTicketing.Core.Interfaces;
