@@ -31,9 +31,16 @@ export default function TicketDrawer({ onUpdated }: { onUpdated: () => void }) {
   )
 
   const statusMut = useMutation(
-    (status: string) => ticketsApi.updateStatus(ticketId!, status, userId!),
+    (status: string) => {
+      const actor = userId ?? '00000000-0000-0000-0000-000000000001'
+      return ticketsApi.updateStatus(ticketId!, status, actor)
+    },
     {
-      onSuccess: () => { refetch(); onUpdated(); toast('Status updated', 'success') }
+      onSuccess: () => { refetch(); onUpdated(); toast('Status updated', 'success') },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.error ?? err?.message ?? 'Failed to update status'
+        toast(msg, 'error')
+      }
     }
   )
 
@@ -202,9 +209,9 @@ export default function TicketDrawer({ onUpdated }: { onUpdated: () => void }) {
                     {STATUS_OPTIONS.map(o => (
                       <button
                         key={o.value}
-                        className={clsx('btn text-xs py-2', ticket.status === o.value && 'btn-primary')}
+                        className={clsx('btn text-xs py-2', ticket.status?.toLowerCase() === o.value.toLowerCase() && 'btn-primary')}
                         onClick={() => statusMut.mutate(o.value)}
-                        disabled={statusMut.isLoading || ticket.status === o.value}
+                        disabled={statusMut.isLoading || ticket.status?.toLowerCase() === o.value.toLowerCase()}
                       >
                         {o.label}
                       </button>
