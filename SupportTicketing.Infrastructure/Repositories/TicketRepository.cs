@@ -22,7 +22,17 @@ public class TicketRepository : ITicketRepository
     public async Task<Ticket?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         const string sql = @"
-            SELECT t.*, c.*, u.*, tm.*
+            SELECT
+                t.id, t.ticket_number, t.subject, t.description,
+                t.status::text AS status, t.priority::text AS priority,
+                t.channel::text AS channel, t.customer_id, t.assignee_id,
+                t.team_id, t.category_id, t.sla_policy_id,
+                t.first_response_due_at, t.resolution_due_at,
+                t.first_responded_at, t.resolved_at, t.closed_at,
+                t.sla_breached, t.external_ref, t.created_at, t.updated_at,
+                c.id, c.email, c.full_name, c.phone, c.company,
+                u.id, u.email, u.full_name, u.role::text AS role, u.is_active,
+                tm.id, tm.name
             FROM tickets t
             JOIN customers c   ON c.id = t.customer_id
             LEFT JOIN users u  ON u.id = t.assignee_id

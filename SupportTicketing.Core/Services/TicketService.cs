@@ -75,8 +75,9 @@ public class TicketService : ITicketService
             new TicketCreatedEvent(ticket.Id, ticket.TicketNumber, ticket.Subject, customer.Email, ticket.AssigneeId),
             ct);
 
-        // Fire automation rules
-        await _automation.ExecuteAsync(AutomationTrigger.TicketCreated, ticket, ct);
+        // Fire automation rules (non-fatal)
+        try { await _automation.ExecuteAsync(AutomationTrigger.TicketCreated, ticket, ct); }
+        catch (Exception ex) { _logger.LogWarning("Automation failed: {Error}", ex.Message); }
 
         // Send notifications
         await _notifications.SendTicketCreatedAsync(ticket, ct);
@@ -106,7 +107,8 @@ public class TicketService : ITicketService
             new TicketStatusChangedEvent(ticket.Id, ticket.TicketNumber, oldStatus, ticket.Status),
             ct);
 
-        await _automation.ExecuteAsync(AutomationTrigger.StatusChanged, ticket, ct);
+        try { await _automation.ExecuteAsync(AutomationTrigger.StatusChanged, ticket, ct); }
+        catch (Exception ex) { _logger.LogWarning("Automation failed: {Error}", ex.Message); }
 
         // Send CSAT survey on resolution
         if (request.Status == TicketStatus.Resolved)
