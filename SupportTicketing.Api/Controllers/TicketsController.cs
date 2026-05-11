@@ -55,8 +55,17 @@ public class TicketsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTicketRequest request, CancellationToken ct)
     {
-        var ticket = await _ticketService.CreateAsync(request, ct);
-        return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
+        try
+        {
+            if (request == null)
+                return BadRequest(new { error = "Request body is null" });
+            var ticket = await _ticketService.CreateAsync(request, ct);
+            return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message, request = new { request?.Subject, request?.CustomerEmail, request?.Priority } });
+        }
     }
 
     /// <summary>Update ticket status.</summary>
