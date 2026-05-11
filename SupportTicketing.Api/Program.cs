@@ -171,7 +171,62 @@ app.UseExceptionHandler(err => err.Run(async ctx =>
 }));
 
 app.MapControllers();
+
+// Auto-migrate on startup — creates tables if they don't exist
+await MigrationHelper.RunAsync(app);
+
 app.Run();
+
+public static class MigrationHelper
+{
+    public static async Task RunAsync(WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<System.Data.IDbConnection>();
+        try
+        {
+            db.Open();
+            var tableCount = await db.ExecuteScalarAsync<int>(
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name='users'");
+            if (tableCount > 0) { app.Logger.LogInformation("Database already migrated."); return; }
+
+            app.Logger.LogInformation("Running auto-migration...");
+            var sql = new[]
+            {
+                "CREATE EXTENSION IF NOT EXISTS pgcrypto",
+                "CREATE EXTENSION IF NOT EXISTS citext",
+                "DO $$ BEGIN CREATE TYPE ticket_status AS ENUM ('open','in_progress','pending','resolved','closed'); EXCEPTION WHEN duplicate_object THEN null; END $$",
+                "DO $$ BEGIN CREATE TYPE ticket_priority AS ENUM ('low','medium','high','critical'); EXCEPTION WHEN duplicate_object THEN null; END $$",
+                "DO $$ BEGIN CREATE TYPE ticket_channel AS ENUM ('email','portal','phone','chat','api'); EXCEPTION WHEN duplicate_object THEN null; END $$",
+                "DO $$ BEGIN CREATE TYPE comment_type AS ENUM ('reply','internal_note'); EXCEPTION WHEN duplicate_object THEN null; END $$",
+                "DO $$ BEGIN CREATE TYPE user_role AS ENUM ('admin','agent','viewer'); EXCEPTION WHEN duplicate_object THEN null; END $$",
+                "DO $$ BEGIN CREATE TYPE notification_channel AS ENUM ('email','in_app','sms'); EXCEPTION WHEN duplicate_object THEN null; END $$",
+                "DO $$ BEGIN CREATE TYPE automation_trigger AS ENUM ('ticket_created','ticket_updated','sla_breached','status_changed','idle_timeout'); EXCEPTION WHEN duplicate_object THEN null; END $$",
+                "CREATE TABLE IF NOT EXISTS teams (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR(100) NOT NULL, description TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), deleted_at TIMESTAMPTZ)",
+                "CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), email CITEXT NOT NULL UNIQUE, full_name VARCHAR(150) NOT NULL, avatar_url TEXT, role user_role NOT NULL DEFAULT 'agent', team_id UUID REFERENCES teams(id) ON DELETE SET NULL, is_active BOOLEAN NOT NULL DEFAULT TRUE, password_hash TEXT, last_login_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), deleted_at TIMESTAMPTZ)",
+                "CREATE TABLE IF NOT EXISTS customers (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), email CITEXT NOT NULL UNIQUE, full_name VARCHAR(150), phone VARCHAR(30), company VARCHAR(150), external_id VARCHAR(100), metadata JSONB DEFAULT '{}', created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), deleted_at TIMESTAMPTZ)",
+                "CREATE TABLE IF NOT EXISTS categories (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR(100) NOT NULL UNIQUE, description TEXT, parent_id UUID REFERENCES categories(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())",
+                "CREATE TABLE IF NOT EXISTS sla_policies (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR(150) NOT NULL, description TEXT, priority ticket_priority NOT NULL, first_response_minutes INT NOT NULL, resolution_minutes INT NOT NULL, business_hours_only BOOLEAN NOT NULL DEFAULT TRUE, is_default BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())",
+                "CREATE TABLE IF NOT EXISTS tickets (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), ticket_number BIGSERIAL NOT NULL UNIQUE, subject VARCHAR(500) NOT NULL, description TEXT, status ticket_status NOT NULL DEFAULT 'open', priority ticket_priority NOT NULL DEFAULT 'medium', channel ticket_channel NOT NULL DEFAULT 'portal', customer_id UUID NOT NULL REFERENCES customers(id), assignee_id UUID REFERENCES users(id) ON DELETE SET NULL, team_id UUID REFERENCES teams(id) ON DELETE SET NULL, category_id UUID REFERENCES categories(id) ON DELETE SET NULL, sla_policy_id UUID REFERENCES sla_policies(id) ON DELETE SET NULL, first_response_due_at TIMESTAMPTZ, resolution_due_at TIMESTAMPTZ, first_responded_at TIMESTAMPTZ, resolved_at TIMESTAMPTZ, closed_at TIMESTAMPTZ, sla_breached BOOLEAN NOT NULL DEFAULT FALSE, external_ref VARCHAR(100), metadata JSONB DEFAULT '{}', created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), deleted_at TIMESTAMPTZ)",
+                "CREATE TABLE IF NOT EXISTS tags (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR(80) NOT NULL UNIQUE)",
+                "CREATE TABLE IF NOT EXISTS ticket_tags (ticket_id UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE, tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE, PRIMARY KEY (ticket_id, tag_id))",
+                "CREATE TABLE IF NOT EXISTS comments (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), ticket_id UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE, author_user_id UUID REFERENCES users(id) ON DELETE SET NULL, author_customer_id UUID REFERENCES customers(id) ON DELETE SET NULL, comment_type comment_type NOT NULL DEFAULT 'reply', body TEXT NOT NULL, is_edited BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), deleted_at TIMESTAMPTZ)",
+                "CREATE TABLE IF NOT EXISTS notifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, ticket_id UUID REFERENCES tickets(id) ON DELETE CASCADE, channel notification_channel NOT NULL DEFAULT 'in_app', subject VARCHAR(300), body TEXT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE, sent_at TIMESTAMPTZ, read_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())",
+                "CREATE TABLE IF NOT EXISTS automation_rules (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR(200) NOT NULL, description TEXT, is_active BOOLEAN NOT NULL DEFAULT TRUE, trigger_event automation_trigger NOT NULL, conditions JSONB NOT NULL DEFAULT '[]', actions JSONB NOT NULL DEFAULT '[]', execution_order INT NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())",
+                "CREATE TABLE IF NOT EXISTS csat_surveys (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), ticket_id UUID NOT NULL UNIQUE REFERENCES tickets(id) ON DELETE CASCADE, customer_id UUID NOT NULL REFERENCES customers(id), score SMALLINT CHECK (score BETWEEN 1 AND 5), comment TEXT, sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), responded_at TIMESTAMPTZ)",
+                "INSERT INTO categories (name,description) VALUES ('Billing','Payment queries'),('Technical','Bugs and issues'),('Account','Login and access'),('General','General enquiries') ON CONFLICT (name) DO NOTHING",
+                "INSERT INTO sla_policies (name,priority,first_response_minutes,resolution_minutes,is_default) VALUES ('Critical SLA','critical',60,240,TRUE),('High SLA','high',240,1440,TRUE),('Medium SLA','medium',480,4320,TRUE),('Low SLA','low',1440,10080,TRUE) ON CONFLICT DO NOTHING"
+            };
+            foreach (var s in sql) await db.ExecuteAsync(s);
+            app.Logger.LogInformation("Auto-migration complete.");
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogError("Auto-migration failed: {Error}", ex.Message);
+        }
+        finally { db.Close(); }
+    }
+}
 
 // ── SLA background job ────────────────────────────────────────────────────
 public class SlaEvaluationJob : BackgroundService
