@@ -17,8 +17,49 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        var result = await _auth.LoginAsync(request.Email, request.Password, ct);
-        return Ok(result);
+        try
+        {
+            var result = await _auth.LoginAsync(request.Email, request.Password, ct);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message });
+        }
+    }
+
+    /// <summary>Debug login — returns detailed info without actually logging in.</summary>
+    [HttpPost("debug-login")]
+    public async Task<IActionResult> DebugLogin([FromBody] LoginRequest request, CancellationToken ct)
+    {
+        try
+        {
+            using var scope = HttpContext.RequestServices.CreateScope();
+            var userRepo = scope.ServiceProvider.GetRequiredService<SupportTicketing.Core.Interfaces.IUserRepository>();
+            var user = await userRepo.GetByEmailAsync(request.Email, ct);
+
+            if (user == null)
+                return Ok(new { found = false, email = request.Email });
+
+            var hashMatch = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash ?? "");
+            return Ok(new {
+                found      = true,
+                email      = user.Email,
+                isActive   = user.IsActive,
+                hasHash    = !string.IsNullOrEmpty(user.PasswordHash),
+                hashPrefix = user.PasswordHash?.Substring(0, 10),
+                passwordMatch = hashMatch,
+                role       = user.Role.ToString()
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     /// <summary>Exchange a refresh token for a new access token.</summary>
