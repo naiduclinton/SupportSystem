@@ -145,6 +145,15 @@ public record SlaBreachDetail(
     DateTime? ResolvedAt
 );
 
+// ── Dashboard drill-down models
+public record TicketVolumePoint(string Day, string Date, int Created, int Resolved);
+public record CategoryBreakdown(string Category, int Count, double Percentage);
+public record DashboardDrillDown(
+    IEnumerable<TicketVolumePoint> VolumeByDay,
+    IEnumerable<CategoryBreakdown> ByCategory,
+    IEnumerable<TicketSummary> RecentTickets
+);
+
 // ── RabbitMQ event messages ───────────────────────────────────────────────
 public record TicketCreatedEvent(Guid TicketId, long TicketNumber, string Subject, string CustomerEmail, Guid? AssigneeId);
 public record TicketAssignedEvent(Guid TicketId, long TicketNumber, Guid AssigneeId, string AssigneeEmail);

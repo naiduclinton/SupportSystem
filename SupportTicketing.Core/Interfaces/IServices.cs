@@ -46,6 +46,7 @@ public interface IReportingService
     Task<DashboardStats> GetDashboardStatsAsync(CancellationToken ct = default);
     Task<IEnumerable<AgentWorkload>> GetAgentWorkloadsAsync(CancellationToken ct = default);
     Task<SlaReport> GetSlaReportAsync(DateTime from, DateTime to, CancellationToken ct = default);
+    Task<DashboardDrillDown> GetDashboardDrillDownAsync(CancellationToken ct = default);
 }
 
 public interface IMessageBus

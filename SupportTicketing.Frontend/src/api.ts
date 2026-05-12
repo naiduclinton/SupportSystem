@@ -80,6 +80,8 @@ export const reportsApi = {
     api.get<AgentWorkload[]>('/reports/agents').then(r => r.data),
   sla: (from: string, to: string) =>
     api.get('/reports/sla', { params: { from, to } }).then(r => r.data),
+  drillDown: () =>
+    api.get('/reports/dashboard/drilldown').then(r => r.data),
 }
 
 // ── Users ──────────────────────────────────────────────────────────────────

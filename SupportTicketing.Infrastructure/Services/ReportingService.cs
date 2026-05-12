@@ -73,6 +73,90 @@ public class ReportingService : IReportingService
         ));
     }
 
+    public async Task<DashboardDrillDown> GetDashboardDrillDownAsync(CancellationToken ct = default)
+    {
+        // Volume by day — last 7 days
+        var volumeRows = await _db.QueryAsync<dynamic>(@"
+            SELECT
+                TO_CHAR(d.day, 'Dy') AS day_label,
+                TO_CHAR(d.day, 'YYYY-MM-DD') AS date,
+                COUNT(t.id) FILTER (WHERE t.created_at::date = d.day::date)  AS created,
+                COUNT(t.id) FILTER (WHERE t.resolved_at::date = d.day::date) AS resolved
+            FROM generate_series(
+                CURRENT_DATE - INTERVAL '6 days',
+                CURRENT_DATE,
+                '1 day'::interval
+            ) AS d(day)
+            LEFT JOIN tickets t ON t.deleted_at IS NULL
+            GROUP BY d.day
+            ORDER BY d.day");
+
+        var volume = volumeRows.Select(r => new TicketVolumePoint(
+            Day:      (string)(r.day_label ?? ""),
+            Date:     (string)(r.date ?? ""),
+            Created:  (int)(r.created ?? 0),
+            Resolved: (int)(r.resolved ?? 0)
+        )).ToList();
+
+        // By category
+        var total = await _db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM tickets WHERE deleted_at IS NULL AND status != 'closed'");
+        var categoryRows = await _db.QueryAsync<dynamic>(@"
+            SELECT
+                COALESCE(c.name, 'Uncategorized') AS category,
+                COUNT(t.id) AS count
+            FROM tickets t
+            LEFT JOIN categories c ON c.id = t.category_id
+            WHERE t.deleted_at IS NULL AND t.status != 'closed'
+            GROUP BY c.name
+            ORDER BY count DESC");
+
+        var categories = categoryRows.Select(r => new CategoryBreakdown(
+            Category:   (string)(r.category ?? "Uncategorized"),
+            Count:      (int)(r.count ?? 0),
+            Percentage: total > 0 ? Math.Round(100.0 * (int)(r.count ?? 0) / total, 1) : 0
+        )).ToList();
+
+        // Recent tickets (last 10)
+        var recentRows = await _db.QueryAsync<dynamic>(@"
+            SELECT
+                t.id, t.ticket_number, t.subject,
+                t.status::text AS status, t.priority::text AS priority,
+                t.sla_breached, t.created_at, t.updated_at,
+                t.first_response_due_at, t.resolution_due_at,
+                c.full_name AS customer_name, c.email AS customer_email,
+                u.full_name AS assignee_name,
+                tm.name AS team_name, cat.name AS category_name,
+                NULL::numeric AS sla_compliance_pct,
+                NULL::numeric AS resolution_minutes_remaining
+            FROM tickets t
+            JOIN customers c         ON c.id = t.customer_id
+            LEFT JOIN users u        ON u.id = t.assignee_id
+            LEFT JOIN teams tm       ON tm.id = t.team_id
+            LEFT JOIN categories cat ON cat.id = t.category_id
+            WHERE t.deleted_at IS NULL
+            ORDER BY t.created_at DESC
+            LIMIT 10");
+
+        var recent = recentRows.Select(r => new TicketSummary
+        {
+            Id           = r.id,
+            TicketNumber = r.ticket_number ?? 0,
+            Subject      = r.subject ?? string.Empty,
+            Status       = r.status ?? "open",
+            Priority     = r.priority ?? "medium",
+            CustomerName  = r.customer_name ?? string.Empty,
+            CustomerEmail = r.customer_email ?? string.Empty,
+            AssigneeName  = r.assignee_name,
+            TeamName      = r.team_name,
+            CategoryName  = r.category_name,
+            SlaBreached   = r.sla_breached ?? false,
+            CreatedAt     = r.created_at ?? DateTime.UtcNow,
+            UpdatedAt     = r.updated_at ?? DateTime.UtcNow,
+        }).ToList();
+
+        return new DashboardDrillDown(volume, categories, recent);
+    }
+
     public async Task<SlaReport> GetSlaReportAsync(DateTime from, DateTime to, CancellationToken ct = default)
     {
         var total = await _db.ExecuteScalarAsync<int>(

@@ -147,6 +147,14 @@ public class ReportsController : ControllerBase
         var workloads = await _reporting.GetAgentWorkloadsAsync(ct);
         return Ok(workloads);
     }
+
+    /// <summary>Dashboard drill-down data: volume trend, category breakdown, recent tickets.</summary>
+    [HttpGet("dashboard/drilldown")]
+    public async Task<IActionResult> DashboardDrillDown(CancellationToken ct)
+    {
+        var data = await _reporting.GetDashboardDrillDownAsync(ct);
+        return Ok(data);
+    }
 }
 
 // ── Notifications ─────────────────────────────────────────────────────────
