@@ -4,7 +4,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   Tooltip, ResponsiveContainer, CartesianGrid, Cell
 } from 'recharts'
-import { reportsApi } from '../api'
+import { reportsApi, ticketsApi } from '../api'
 import { Avatar, Spinner, StatusBadge, PriorityBadge } from '../components/ui'
 import { useDrawer } from '../store'
 import { format } from 'date-fns'
@@ -101,15 +101,15 @@ export default function DashboardPage() {
     { staleTime: 30_000 }
   )
 
-  const { data: ticketList } = useQuery(
+  const { data: ticketList, isLoading: ticketsLoading } = useQuery(
     ['tickets-modal', filterStatus],
-    () => import('../api').then(m => m.ticketsApi.list({
+    () => ticketsApi.list({
       status: filterStatus as any,
       pageSize: 50,
       sortBy: 'created_at',
       sortDesc: true
-    })),
-    { enabled: !!filterStatus && !!modal, staleTime: 10_000 }
+    }),
+    { enabled: !!modal?.startsWith('status-') || modal === 'sla-breach' || modal === 'recent', staleTime: 10_000 }
   )
 
   const openModal = (key: string, status?: string) => {
@@ -249,7 +249,9 @@ export default function DashboardPage() {
           title={`${modal === 'status-open' ? 'Open' : modal === 'status-progress' ? 'In Progress' : modal === 'status-pending' ? 'Pending' : 'Resolved'} Tickets`}
           onClose={() => setModal(null)}
         >
-          {ticketList ? (
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-8"><Spinner /></div>
+          ) : ticketList ? (
             <TicketMiniTable tickets={ticketList.items} onTicketClick={(id) => { openTicket(id); setModal(null) }} />
           ) : <div className="flex items-center justify-center py-8"><Spinner /></div>}
         </DrillDownModal>
@@ -258,7 +260,9 @@ export default function DashboardPage() {
       {/* SLA breach drill-down */}
       {modal === 'sla-breach' && (
         <DrillDownModal title="SLA Breached Tickets" onClose={() => setModal(null)}>
-          {ticketList ? (
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-8"><Spinner /></div>
+          ) : ticketList ? (
             <TicketMiniTable tickets={ticketList.items.filter((t: any) => t.slaBreached)} onTicketClick={(id) => { openTicket(id); setModal(null) }} />
           ) : <div className="flex items-center justify-center py-8"><Spinner /></div>}
         </DrillDownModal>
@@ -346,8 +350,8 @@ export default function DashboardPage() {
 
 // ── Agent workload sub-component ──────────────────────────────────────────
 function AgentWorkloadTable({ onDrillDown, expanded }: { onDrillDown: (id: string) => void; expanded?: boolean }) {
-  const { data: workloads, isLoading } = useQuery('agent-workloads', () =>
-    import('../api').then(m => m.reportsApi.agents()), { staleTime: 30_000 })
+  const { data: workloads, isLoading } = useQuery('agent-workloads', 
+    reportsApi.agents, { staleTime: 30_000 })
 
   if (isLoading) return <div className="flex items-center justify-center py-6"><Spinner /></div>
   if (!workloads?.length) return <p className="text-sm text-center py-6" style={{ color: 'var(--ink-3)' }}>No agents found.</p>
