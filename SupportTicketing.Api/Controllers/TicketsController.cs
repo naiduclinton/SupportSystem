@@ -24,8 +24,8 @@ public class TicketsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedResult<TicketSummary>>> GetAll(
         [FromQuery] string? search,
-        [FromQuery] TicketStatus? status,
-        [FromQuery] TicketPriority? priority,
+        [FromQuery] string? status,
+        [FromQuery] string? priority,
         [FromQuery] Guid? assigneeId,
         [FromQuery] Guid? teamId,
         [FromQuery] bool? slaBreached,
@@ -35,8 +35,22 @@ public class TicketsController : ControllerBase
         [FromQuery] bool sortDesc = true,
         CancellationToken ct = default)
     {
+        // Parse status — accept both snake_case (in_progress) and PascalCase (InProgress)
+        TicketStatus? parsedStatus = null;
+        if (!string.IsNullOrEmpty(status))
+        {
+            var normalized = status.Replace("_", "");
+            if (Enum.TryParse<TicketStatus>(normalized, true, out var s)) parsedStatus = s;
+        }
+
+        TicketPriority? parsedPriority = null;
+        if (!string.IsNullOrEmpty(priority))
+        {
+            if (Enum.TryParse<TicketPriority>(priority, true, out var p)) parsedPriority = p;
+        }
+
         var query = new TicketSearchQuery(
-            search, status, priority, assigneeId, teamId, null,
+            search, parsedStatus, parsedPriority, assigneeId, teamId, null,
             slaBreached, null, null, page, Math.Min(pageSize, 100), sortBy, sortDesc);
 
         var result = await _ticketRepo.SearchAsync(query, ct);

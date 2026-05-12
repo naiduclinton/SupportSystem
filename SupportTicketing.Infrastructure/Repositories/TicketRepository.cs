@@ -74,6 +74,22 @@ public class TicketRepository : ITicketRepository
         var ticket = await GetByIdAsync(id, ct);
         if (ticket is null) return null;
 
+        // Load customer
+        var customer = await _db.QueryFirstOrDefaultAsync<dynamic>(
+            "SELECT id, email, full_name, phone, company FROM customers WHERE id = @Id",
+            new { Id = ticket.CustomerId });
+        if (customer != null)
+        {
+            ticket.Customer = new Core.Entities.Customer
+            {
+                Id       = customer.id,
+                Email    = customer.email ?? string.Empty,
+                FullName = customer.full_name,
+                Phone    = customer.phone,
+                Company  = customer.company,
+            };
+        }
+
         const string commentSql = @"
             SELECT
                 co.id, co.ticket_id, co.author_user_id, co.author_customer_id,
@@ -130,13 +146,13 @@ public class TicketRepository : ITicketRepository
         if (query.Status.HasValue)
         {
             conditions.Add("t.status = @Status::ticket_status");
-            parameters.Add("Status", query.Status.Value.ToString().ToLower());
+            parameters.Add("Status", ToSnakeCase(query.Status.Value.ToString()));
         }
 
         if (query.Priority.HasValue)
         {
             conditions.Add("t.priority = @Priority::ticket_priority");
-            parameters.Add("Priority", query.Priority.Value.ToString().ToLower());
+            parameters.Add("Priority", ToSnakeCase(query.Priority.Value.ToString()));
         }
 
         if (query.AssigneeId.HasValue)

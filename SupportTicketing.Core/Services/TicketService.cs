@@ -14,6 +14,7 @@ public class TicketService : ITicketService
     private readonly ISlaService _slaService;
     private readonly INotificationService _notifications;
     private readonly IAutomationService _automation;
+    private readonly ICommentRepository _comments;
     private readonly IMessageBus _bus;
     private readonly ILogger<TicketService> _logger;
 
@@ -24,6 +25,7 @@ public class TicketService : ITicketService
         ISlaService slaService,
         INotificationService notifications,
         IAutomationService automation,
+        ICommentRepository comments,
         IMessageBus bus,
         ILogger<TicketService> logger)
     {
@@ -33,6 +35,7 @@ public class TicketService : ITicketService
         _slaService = slaService;
         _notifications = notifications;
         _automation = automation;
+        _comments = comments;
         _bus = bus;
         _logger = logger;
     }
@@ -157,6 +160,9 @@ public class TicketService : ITicketService
             ticket.FirstRespondedAt = DateTime.UtcNow;
             await _tickets.UpdateAsync(ticket, ct);
         }
+
+        // Persist comment to database
+        await _comments.AddAsync(comment, ct);
 
         await _bus.PublishAsync("tickets", "ticket.updated",
             new TicketStatusChangedEvent(ticket.Id, ticket.TicketNumber, ticket.Status, ticket.Status), ct);
