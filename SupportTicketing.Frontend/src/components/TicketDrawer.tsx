@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { format } from 'date-fns'
 import { clsx } from 'clsx'
@@ -52,7 +53,7 @@ export default function TicketDrawer({ onUpdated }: { onUpdated: () => void }) {
     }
   )
 
-  return (
+  return createPortal(
     <>
       <div className="drawer-backdrop" onClick={close} />
       <div className="drawer flex flex-col">
@@ -224,6 +225,6 @@ export default function TicketDrawer({ onUpdated }: { onUpdated: () => void }) {
           </>
         )}
       </div>
-    </>
+    </>, document.body
   )
 }

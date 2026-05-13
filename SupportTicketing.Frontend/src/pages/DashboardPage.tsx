@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery } from 'react-query'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
@@ -250,7 +251,9 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* ── Drill-down modals ── */}
+      {/* ── Drill-down modals rendered via portal to avoid stacking context issues ── */}
+      {modal && createPortal(
+        <>
 
       {/* Status drill-downs */}
       {modal?.startsWith('status-') && (
@@ -352,6 +355,8 @@ export default function DashboardPage() {
         <DrillDownModal title="Agent workload detail" onClose={() => setModal(null)}>
           <AgentWorkloadTable onDrillDown={(id) => openModal('agent-tickets-' + id)} expanded />
         </DrillDownModal>
+      )}
+        </>, document.body
       )}
     </div>
   )

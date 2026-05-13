@@ -25,7 +25,7 @@ function AppShell() {
   return (
     <div className="app-shell">
       <Sidebar />
-      <main className="flex flex-col overflow-hidden" style={{ background: 'var(--surface-1)' }}>
+      <main className="flex flex-col overflow-y-auto" style={{ background: 'var(--surface-1)' }}>
         <Routes>
           <Route path="/tickets"   element={<TicketsPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />

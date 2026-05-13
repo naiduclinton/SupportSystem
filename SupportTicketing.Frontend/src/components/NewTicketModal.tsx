@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { useForm } from 'react-hook-form'
 import { useMutation } from 'react-query'
 import { ticketsApi } from '../api'
@@ -17,7 +18,7 @@ export default function NewTicketModal({ onClose, onCreated }: {
     onSuccess: onCreated
   })
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 pt-6 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -103,5 +104,5 @@ export default function NewTicketModal({ onClose, onCreated }: {
         </form>
       </div>
     </div>
-  )
+  , document.body)
 }
