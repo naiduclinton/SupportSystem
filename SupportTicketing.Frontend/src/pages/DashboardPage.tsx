@@ -18,18 +18,27 @@ interface DrillDownData  { volumeByDay: VolumePoint[]; byCategory: CategoryItem[
 function StatCard({ label, value, sub, color, onClick }: {
   label: string; value: string | number; sub?: string; color?: string; onClick?: () => void
 }) {
-  return (
-    <div
-      className={`stat-card ${onClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
-      onClick={onClick}
-      title={onClick ? `Click to view ${label} tickets` : undefined}
-    >
+  const inner = (
+    <>
       <p className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--ink-3)' }}>{label}</p>
       <p className="text-3xl font-display font-semibold" style={{ color: color ?? 'var(--ink)' }}>{value}</p>
       {sub && <p className="text-xs mt-1" style={{ color: 'var(--ink-3)' }}>{sub}</p>}
-      {onClick && <p className="text-xs mt-2" style={{ color: 'var(--accent)' }}>Click to drill down →</p>}
-    </div>
+      {onClick && <p className="text-xs mt-2" style={{ color: 'var(--accent)' }}>Drill down →</p>}
+    </>
   )
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="stat-card text-left w-full hover:opacity-80 transition-opacity"
+        style={{ cursor: 'pointer' }}
+      >
+        {inner}
+      </button>
+    )
+  }
+  return <div className="stat-card">{inner}</div>
 }
 
 // ── Drill-down modal ───────────────────────────────────────────────────────
