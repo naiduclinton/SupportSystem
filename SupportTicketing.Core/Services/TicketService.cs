@@ -56,8 +56,12 @@ public class TicketService : ITicketService
             AssigneeId = request.AssigneeId,
             TeamId = request.TeamId,
             CategoryId = request.CategoryId,
-            SlaPolicyId = slaPolicy?.Id,
-            Status = TicketStatus.Open
+            SlaPolicyId         = slaPolicy?.Id,
+            Status              = TicketStatus.Open,
+            AccountHolder       = request.AccountHolder,
+            ChannelPartnerName  = request.ChannelPartnerName,
+            AccountCustomer     = request.AccountCustomer?[..Math.Min(15, request.AccountCustomer.Length)],
+            AccountProduct      = request.AccountProduct?[..Math.Min(10, request.AccountProduct.Length)]
         };
 
         if (slaPolicy is not null)

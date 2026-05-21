@@ -180,6 +180,10 @@ export default function TicketDrawer({ onUpdated }: { onUpdated: () => void }) {
                     { label: 'Category', value: ticket.categoryName ?? '—' },
                     { label: 'Team',     value: ticket.teamName ?? '—' },
                     { label: 'Created',  value: format(new Date(ticket.createdAt), 'MMM d, yyyy HH:mm') },
+                    { label: 'Account holder', value: ticket.accountHolder ?? '—' },
+                    { label: 'Channel partner', value: ticket.channelPartnerName ?? (ticket.accountHolder === 'ChannelPartner' ? '—' : 'N/A') },
+                    { label: 'Account customer', value: ticket.accountCustomer ?? '—' },
+                    { label: 'Product',  value: ticket.accountProduct ?? '—' },
                   ].map(f => (
                     <div key={f.label}>
                       <div className="text-[11px] uppercase tracking-wide mb-1" style={{ color: 'var(--ink-3)' }}>{f.label}</div>

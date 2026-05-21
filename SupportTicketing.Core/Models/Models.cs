@@ -61,6 +61,12 @@ public class CreateTicketRequest
     public Guid? AssigneeId { get; set; }
     public Guid? TeamId { get; set; }
     public List<string>? Tags { get; set; }
+
+    // Account details
+    public string? AccountHolder { get; set; }
+    public string? ChannelPartnerName { get; set; }
+    public string? AccountCustomer { get; set; }
+    public string? AccountProduct { get; set; }
 }
 
 public class UpdateStatusRequest

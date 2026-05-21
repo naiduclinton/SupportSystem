@@ -30,7 +30,8 @@ public class TicketRepository : ITicketRepository
                 t.first_response_due_at, t.resolution_due_at,
                 t.first_responded_at, t.resolved_at, t.closed_at,
                 t.sla_breached, t.external_ref, t.created_at, t.updated_at,
-                t.metadata
+                t.metadata, t.account_holder, t.channel_partner_name,
+                t.account_customer, t.account_product
             FROM tickets t
             WHERE t.id = @Id AND t.deleted_at IS NULL";
 
@@ -65,6 +66,10 @@ public class TicketRepository : ITicketRepository
         SlaBreached         = row.sla_breached ?? false,
         ExternalRef         = row.external_ref,
         Metadata            = row.metadata ?? "{}",
+        AccountHolder       = row.account_holder,
+        ChannelPartnerName  = row.channel_partner_name,
+        AccountCustomer     = row.account_customer,
+        AccountProduct      = row.account_product,
         CreatedAt           = row.created_at ?? DateTime.UtcNow,
         UpdatedAt           = row.updated_at ?? DateTime.UtcNow,
         }; }
@@ -246,11 +251,15 @@ public class TicketRepository : ITicketRepository
             INSERT INTO tickets
                 (id, subject, description, status, priority, channel,
                  customer_id, assignee_id, team_id, category_id, sla_policy_id,
-                 first_response_due_at, resolution_due_at, external_ref, metadata, created_at, updated_at)
+                 first_response_due_at, resolution_due_at, external_ref, metadata,
+                 account_holder, channel_partner_name, account_customer, account_product,
+                 created_at, updated_at)
             VALUES
                 (@Id, @Subject, @Description, @Status::ticket_status, @Priority::ticket_priority,
                  @Channel::ticket_channel, @CustomerId, @AssigneeId, @TeamId, @CategoryId, @SlaPolicyId,
-                 @FirstResponseDueAt, @ResolutionDueAt, @ExternalRef, @Metadata::jsonb, @CreatedAt, @UpdatedAt)
+                 @FirstResponseDueAt, @ResolutionDueAt, @ExternalRef, @Metadata::jsonb,
+                 @AccountHolder, @ChannelPartnerName, @AccountCustomer, @AccountProduct,
+                 @CreatedAt, @UpdatedAt)
             RETURNING id, ticket_number, created_at, updated_at";
 
         var result = await _db.QueryFirstAsync<dynamic>(sql, new
@@ -264,7 +273,9 @@ public class TicketRepository : ITicketRepository
             entity.FirstResponseDueAt, entity.ResolutionDueAt,
             entity.ExternalRef,
             Metadata = entity.Metadata ?? "{}",
-            entity.CreatedAt, entity.UpdatedAt
+            entity.CreatedAt, entity.UpdatedAt,
+            entity.AccountHolder, entity.ChannelPartnerName,
+            entity.AccountCustomer, entity.AccountProduct
         });
         entity.TicketNumber = result.ticket_number;
 

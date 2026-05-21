@@ -74,6 +74,12 @@ public class Ticket : BaseEntity
     public DateTime? ClosedAt { get; set; }
     public bool SlaBreached { get; set; } = false;
 
+    // Account details
+    public string? AccountHolder { get; set; }        // "AdaptIT" or "ChannelPartner"
+    public string? ChannelPartnerName { get; set; }
+    public string? AccountCustomer { get; set; }      // max 15 chars
+    public string? AccountProduct { get; set; }       // max 10 chars
+
     public string? ExternalRef { get; set; }
     public string Metadata { get; set; } = "{}";
 

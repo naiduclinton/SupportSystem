@@ -213,7 +213,11 @@ public static class MigrationHelper
                 "CREATE TABLE IF NOT EXISTS automation_rules (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR(200) NOT NULL, description TEXT, is_active BOOLEAN NOT NULL DEFAULT TRUE, trigger_event automation_trigger NOT NULL, conditions JSONB NOT NULL DEFAULT '[]', actions JSONB NOT NULL DEFAULT '[]', execution_order INT NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())",
                 "CREATE TABLE IF NOT EXISTS csat_surveys (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), ticket_id UUID NOT NULL UNIQUE REFERENCES tickets(id) ON DELETE CASCADE, customer_id UUID NOT NULL REFERENCES customers(id), score SMALLINT CHECK (score BETWEEN 1 AND 5), comment TEXT, sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), responded_at TIMESTAMPTZ)",
                 "INSERT INTO categories (name,description) VALUES ('Billing','Payment queries'),('Technical','Bugs and issues'),('Account','Login and access'),('General','General enquiries') ON CONFLICT (name) DO NOTHING",
-                "INSERT INTO sla_policies (name,priority,first_response_minutes,resolution_minutes,is_default) VALUES ('Critical SLA','critical',60,240,TRUE),('High SLA','high',240,1440,TRUE),('Medium SLA','medium',480,4320,TRUE),('Low SLA','low',1440,10080,TRUE) ON CONFLICT DO NOTHING"
+                "INSERT INTO sla_policies (name,priority,first_response_minutes,resolution_minutes,is_default) VALUES ('Critical SLA','critical',60,240,TRUE),('High SLA','high',240,1440,TRUE),('Medium SLA','medium',480,4320,TRUE),('Low SLA','low',1440,10080,TRUE) ON CONFLICT DO NOTHING",
+                "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS account_holder VARCHAR(50)",
+                "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS channel_partner_name VARCHAR(150)",
+                "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS account_customer VARCHAR(15)",
+                "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS account_product VARCHAR(10)"
             };
             foreach (var s in sql) await db.ExecuteAsync(s);
             app.Logger.LogInformation("Auto-migration complete.");
