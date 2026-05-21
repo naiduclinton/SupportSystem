@@ -148,6 +148,14 @@ public class ReportsController : ControllerBase
         return Ok(workloads);
     }
 
+    /// <summary>Account holder volume breakdown — Adapt IT vs Channel Partners.</summary>
+    [HttpGet("account-holder")]
+    public async Task<IActionResult> AccountHolderStats(CancellationToken ct)
+    {
+        var data = await _reporting.GetAccountHolderStatsAsync(ct);
+        return Ok(data);
+    }
+
     /// <summary>Dashboard drill-down data: volume trend, category breakdown, recent tickets.</summary>
     [HttpGet("dashboard/drilldown")]
     public async Task<IActionResult> DashboardDrillDown(CancellationToken ct)

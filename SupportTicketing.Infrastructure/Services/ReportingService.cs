@@ -73,6 +73,75 @@ public class ReportingService : IReportingService
         ));
     }
 
+    public async Task<object> GetAccountHolderStatsAsync(CancellationToken ct = default)
+    {
+        var rows = await _db.QueryAsync<dynamic>(@"
+            SELECT
+                COALESCE(account_holder, 'Unassigned') AS account_holder,
+                COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE status = 'open')        AS open_count,
+                COUNT(*) FILTER (WHERE status = 'in_progress') AS in_progress_count,
+                COUNT(*) FILTER (WHERE status = 'pending')     AS pending_count,
+                COUNT(*) FILTER (WHERE status = 'resolved')    AS resolved_count,
+                COUNT(*) FILTER (WHERE status = 'closed')      AS closed_count,
+                COUNT(*) FILTER (WHERE sla_breached = TRUE)    AS sla_breached_count
+            FROM tickets
+            WHERE deleted_at IS NULL
+            GROUP BY account_holder
+            ORDER BY total DESC");
+
+        var byPartner = await _db.QueryAsync<dynamic>(@"
+            SELECT
+                COALESCE(channel_partner_name, 'Direct') AS partner_name,
+                COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE status NOT IN ('resolved','closed')) AS active
+            FROM tickets
+            WHERE deleted_at IS NULL AND account_holder = 'ChannelPartner'
+            GROUP BY channel_partner_name
+            ORDER BY total DESC");
+
+        var trend = await _db.QueryAsync<dynamic>(@"
+            SELECT
+                TO_CHAR(d.day, 'Dy') AS day_label,
+                TO_CHAR(d.day, 'YYYY-MM-DD') AS date,
+                COUNT(t.id) FILTER (WHERE t.account_holder = 'AdaptIT')       AS adapt_it,
+                COUNT(t.id) FILTER (WHERE t.account_holder = 'ChannelPartner') AS channel_partner,
+                COUNT(t.id) FILTER (WHERE t.account_holder IS NULL)            AS unassigned
+            FROM generate_series(
+                CURRENT_DATE - INTERVAL '13 days',
+                CURRENT_DATE,
+                '1 day'::interval
+            ) AS d(day)
+            LEFT JOIN tickets t ON t.created_at::date = d.day::date AND t.deleted_at IS NULL
+            GROUP BY d.day
+            ORDER BY d.day");
+
+        return new {
+            byAccountHolder = rows.Select(r => new {
+                accountHolder    = (string)(r.account_holder ?? "Unassigned"),
+                total            = (int)(r.total ?? 0),
+                openCount        = (int)(r.open_count ?? 0),
+                inProgressCount  = (int)(r.in_progress_count ?? 0),
+                pendingCount     = (int)(r.pending_count ?? 0),
+                resolvedCount    = (int)(r.resolved_count ?? 0),
+                closedCount      = (int)(r.closed_count ?? 0),
+                slaBreachedCount = (int)(r.sla_breached_count ?? 0),
+            }).ToList(),
+            byChannelPartner = byPartner.Select(r => new {
+                partnerName = (string)(r.partner_name ?? "Direct"),
+                total       = (int)(r.total ?? 0),
+                active      = (int)(r.active ?? 0),
+            }).ToList(),
+            trend = trend.Select(r => new {
+                day           = (string)(r.day_label ?? ""),
+                date          = (string)(r.date ?? ""),
+                adaptIt       = (int)(r.adapt_it ?? 0),
+                channelPartner= (int)(r.channel_partner ?? 0),
+                unassigned    = (int)(r.unassigned ?? 0),
+            }).ToList(),
+        };
+    }
+
     public async Task<DashboardDrillDown> GetDashboardDrillDownAsync(CancellationToken ct = default)
     {
         // Volume by day — last 7 days

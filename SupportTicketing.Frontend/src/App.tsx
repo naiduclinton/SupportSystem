@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import Sidebar from './components/Sidebar'
 import TicketsPage from './pages/TicketsPage'
 import DashboardPage from './pages/DashboardPage'
+import AccountDashboard from './pages/AccountDashboard'
 import LoginPage from './pages/LoginPage'
 import { ReportsPage, AgentsPage, KbPage, SettingsPage } from './pages/OtherPages'
 import { ToastContainer } from './components/ui'
@@ -29,6 +30,7 @@ function AppShell() {
         <Routes>
           <Route path="/tickets"   element={<TicketsPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/accounts" element={<AccountDashboard />} />
           <Route path="/reports"   element={<ReportsPage />} />
           <Route path="/agents"    element={<AgentsPage />} />
           <Route path="/kb"        element={<KbPage />} />

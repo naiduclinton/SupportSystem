@@ -82,6 +82,8 @@ export const reportsApi = {
     api.get('/reports/sla', { params: { from, to } }).then(r => r.data),
   drillDown: () =>
     api.get('/reports/dashboard/drilldown').then(r => r.data),
+  accountHolder: () =>
+    api.get('/reports/account-holder').then(r => r.data),
 }
 
 // ── Users ──────────────────────────────────────────────────────────────────

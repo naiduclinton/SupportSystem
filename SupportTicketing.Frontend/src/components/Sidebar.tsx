@@ -7,6 +7,7 @@ import { Avatar } from './ui'
 const NAV = [
   { to: '/tickets',   icon: 'fa-ticket',         label: 'Tickets'      },
   { to: '/dashboard', icon: 'fa-chart-pie',       label: 'Dashboard'    },
+  { to: '/accounts',  icon: 'fa-building',        label: 'Accounts'     },
   { to: '/reports',   icon: 'fa-chart-bar',       label: 'Reports'      },
   { to: '/agents',    icon: 'fa-users',           label: 'Agents'       },
   { to: '/kb',        icon: 'fa-book-open',       label: 'Knowledge Base'},
