@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage'
 import AccountDashboard from './pages/AccountDashboard'
 import LoginPage from './pages/LoginPage'
 import { ReportsPage, AgentsPage, KbPage, SettingsPage } from './pages/OtherPages'
+import TicketReport from './pages/TicketReport'
 import { ToastContainer } from './components/ui'
 import { useAuth, useTheme } from './store'
 
@@ -32,6 +33,7 @@ function AppShell() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/accounts" element={<AccountDashboard />} />
           <Route path="/reports"   element={<ReportsPage />} />
+          <Route path="/report"    element={<TicketReport />} />
           <Route path="/agents"    element={<AgentsPage />} />
           <Route path="/kb"        element={<KbPage />} />
           <Route path="/settings"  element={<SettingsPage />} />
