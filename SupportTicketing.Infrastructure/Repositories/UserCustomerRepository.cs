@@ -65,14 +65,14 @@ public class UserRepository : IUserRepository
     public async Task<User> AddAsync(User entity, CancellationToken ct = default)
     {
         const string sql = @"
-            INSERT INTO users (id, email, full_name, avatar_url, role, team_id, is_active, password_hash, created_at, updated_at)
-            VALUES (@Id, @Email, @FullName, @AvatarUrl, @Role::user_role, @TeamId, @IsActive, @PasswordHash, @CreatedAt, @UpdatedAt)";
+            INSERT INTO users (id, email, full_name, avatar_url, role, team_id, is_active, password_hash, must_change_password, created_at, updated_at)
+            VALUES (@Id, @Email, @FullName, @AvatarUrl, @Role::user_role, @TeamId, @IsActive, @PasswordHash, @MustChangePassword, @CreatedAt, @UpdatedAt)";
         await _db.ExecuteAsync(sql, new
         {
             entity.Id, entity.Email, entity.FullName, entity.AvatarUrl,
             Role = entity.Role.ToString().ToLower(),
             entity.TeamId, entity.IsActive, entity.PasswordHash,
-            entity.CreatedAt, entity.UpdatedAt
+            entity.MustChangePassword, entity.CreatedAt, entity.UpdatedAt
         });
         return entity;
     }
@@ -83,13 +83,16 @@ public class UserRepository : IUserRepository
         const string sql = @"
             UPDATE users SET
                 full_name = @FullName, avatar_url = @AvatarUrl, role = @Role::user_role,
-                team_id = @TeamId, is_active = @IsActive, last_login_at = @LastLoginAt, updated_at = @UpdatedAt
+                team_id = @TeamId, is_active = @IsActive, last_login_at = @LastLoginAt,
+                password_hash = @PasswordHash, must_change_password = @MustChangePassword,
+                updated_at = @UpdatedAt
             WHERE id = @Id";
         await _db.ExecuteAsync(sql, new
         {
             entity.Id, entity.FullName, entity.AvatarUrl,
             Role = entity.Role.ToString().ToLower(),
-            entity.TeamId, entity.IsActive, entity.LastLoginAt, entity.UpdatedAt
+            entity.TeamId, entity.IsActive, entity.LastLoginAt,
+            entity.PasswordHash, entity.MustChangePassword, entity.UpdatedAt
         });
     }
 

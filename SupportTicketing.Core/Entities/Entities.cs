@@ -12,6 +12,7 @@ public class User : BaseEntity
     public bool IsActive { get; set; } = true;
     public string? PasswordHash { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public bool MustChangePassword { get; set; } = false;
 
     public Team? Team { get; set; }
 }

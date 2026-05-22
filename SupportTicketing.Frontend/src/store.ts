@@ -7,7 +7,9 @@ interface AuthState {
   fullName: string | null
   role: string | null
   accessToken: string | null
-  login: (data: { userId: string; fullName: string; role: string; accessToken: string; refreshToken: string }) => void
+  mustChangePassword: boolean
+  login: (data: { userId: string; fullName: string; role: string; accessToken: string; refreshToken: string; mustChangePassword?: boolean }) => void
+  clearMustChangePassword: () => void
   logout: () => void
 }
 
@@ -18,18 +20,20 @@ export const useAuth = create<AuthState>()(
       fullName: null,
       role: null,
       accessToken: null,
-      login: ({ userId, fullName, role, accessToken, refreshToken }) => {
+      mustChangePassword: false,
+      login: ({ userId, fullName, role, accessToken, refreshToken, mustChangePassword }) => {
         localStorage.setItem('access_token', accessToken)
         localStorage.setItem('refresh_token', refreshToken)
-        set({ userId, fullName, role, accessToken })
+        set({ userId, fullName, role, accessToken, mustChangePassword: mustChangePassword ?? false })
       },
+      clearMustChangePassword: () => set({ mustChangePassword: false }),
       logout: () => {
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
-        set({ userId: null, fullName: null, role: null, accessToken: null })
+        set({ userId: null, fullName: null, role: null, accessToken: null, mustChangePassword: false })
       }
     }),
-    { name: 'auth-store', partialize: s => ({ userId: s.userId, fullName: s.fullName, role: s.role }) }
+    { name: 'auth-store', partialize: s => ({ userId: s.userId, fullName: s.fullName, role: s.role, mustChangePassword: s.mustChangePassword }) }
   )
 )
 

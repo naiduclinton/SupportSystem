@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Avatar } from '../components/ui'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -78,6 +79,9 @@ const STATUS_DOT: Record<string, string> = {
 
 export function AgentsPage() {
   const [showInvite, setShowInvite] = useState(false)
+  const [form, setForm] = useState({ fullName: '', email: '', password: '', role: 'agent' })
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
 
   return (
@@ -89,27 +93,74 @@ export function AgentsPage() {
         </button>
       </div>
 
-      {showInvite && (
-        <div className="modal-backdrop" onClick={() => setShowInvite(false)}>
-          <div className="modal p-6" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-semibold text-base">Invite agent</h2>
+      {showInvite && createPortal(
+        <div className="modal-backdrop" onClick={() => { setShowInvite(false); setFormError('') }}>
+          <div className="modal p-6" onClick={e => e.stopPropagation()} style={{ width: 460 }}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-display font-semibold text-base">Add new agent</h2>
               <button className="btn-ghost btn p-2" onClick={() => setShowInvite(false)}><i className="fa-solid fa-xmark" /></button>
             </div>
-            <div className="mb-4">
-              <label className="block text-xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-2)' }}>Email address</label>
-              <input className="input-base" type="email" placeholder="agent@company.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-            </div>
-            <div className="mb-4">
-              <label className="block text-xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-2)' }}>Role</label>
-              <select className="input-base"><option>Agent</option><option>Admin</option><option>Viewer</option></select>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button className="btn" onClick={() => setShowInvite(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => { alert(`Invitation sent to ${inviteEmail}`); setShowInvite(false); setInviteEmail('') }}>Send invite</button>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-2)' }}>Full name <span className="text-red-500">*</span></label>
+                <input className="input-base" placeholder="e.g. Jane Smith" value={form.fullName} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-2)' }}>Email address <span className="text-red-500">*</span></label>
+                <input className="input-base" type="email" placeholder="agent@company.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-2)' }}>
+                  Temporary password <span className="text-red-500">*</span>
+                </label>
+                <input className="input-base" type="password" placeholder="Min. 8 characters" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+                <p className="text-xs mt-1" style={{ color: 'var(--ink-3)' }}>Agent will be forced to change this on first login.</p>
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-2)' }}>Role</label>
+                <select className="input-base" value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
+                  <option value="agent">Agent</option>
+                  <option value="admin">Admin</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+              </div>
+
+              {formError && (
+                <div className="rounded-lg px-4 py-3 text-sm bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                  <i className="fa-solid fa-triangle-exclamation mr-2" />{formError}
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-end pt-2" style={{ borderTop: '1px solid var(--border)' }}>
+                <button className="btn" onClick={() => { setShowInvite(false); setFormError('') }}>Cancel</button>
+                <button
+                  className="btn btn-primary"
+                  disabled={saving || !form.fullName || !form.email || form.password.length < 8}
+                  onClick={async () => {
+                    setSaving(true)
+                    setFormError('')
+                    try {
+                      const { agentsApi } = await import('../api')
+                      await agentsApi.create(form)
+                      setShowInvite(false)
+                      setForm({ fullName: '', email: '', password: '', role: 'agent' })
+                      alert(`Agent ${form.fullName} created successfully. They will be prompted to change their password on first login.`)
+                    } catch (e: any) {
+                      setFormError(e?.response?.data?.error ?? 'Failed to create agent.')
+                    } finally {
+                      setSaving(false)
+                    }
+                  }}
+                >
+                  {saving ? <span className="animate-spin-slow">⟳</span> : <i className="fa-solid fa-user-plus text-xs" />}
+                  Create agent
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className="grid grid-cols-2 gap-4">

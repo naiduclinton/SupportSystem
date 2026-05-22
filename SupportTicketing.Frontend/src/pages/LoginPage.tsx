@@ -19,13 +19,14 @@ export default function LoginPage() {
     try {
       const data = await authApi.login(email, password)
       login({
-        userId:       data.userId,
-        fullName:     data.fullName,
-        role:         data.role,
-        accessToken:  data.accessToken,
-        refreshToken: data.refreshToken,
+        userId:             data.userId,
+        fullName:           data.fullName,
+        role:               data.role,
+        accessToken:        data.accessToken,
+        refreshToken:       data.refreshToken,
+        mustChangePassword: data.mustChangePassword,
       })
-      navigate('/tickets')
+      navigate(data.mustChangePassword ? '/change-password' : '/tickets')
     } catch {
       setError('Invalid email or password.')
     } finally {

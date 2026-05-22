@@ -46,6 +46,13 @@ api.interceptors.response.use(
 export const authApi = {
   login: (email: string, password: string) =>
     api.post<AuthResult>('/auth/login', { email, password }).then(r => r.data),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post('/auth/change-password', { currentPassword, newPassword }).then(r => r.data),
+}
+
+export const agentsApi = {
+  create: (data: { fullName: string; email: string; password: string; role: string }) =>
+    api.post('/users', data).then(r => r.data),
 }
 
 // ── Tickets ────────────────────────────────────────────────────────────────

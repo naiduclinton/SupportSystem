@@ -100,13 +100,27 @@ public class LoginRequest
     public string Password { get; set; } = string.Empty;
 }
 
+public record CreateAgentRequest(
+    string FullName,
+    string Email,
+    string Password,
+    string Role = "agent",
+    string? TeamId = null
+);
+
+public record ChangePasswordRequest(
+    string CurrentPassword,
+    string NewPassword
+);
+
 public record AuthResult(
     string AccessToken,
     string RefreshToken,
     DateTime ExpiresAt,
     string UserId,
     string FullName,
-    string Role
+    string Role,
+    bool MustChangePassword = false
 );
 
 // ── Reporting models ──────────────────────────────────────────────────────

@@ -43,7 +43,20 @@ public class AuthService : IAuthService
         if (string.IsNullOrEmpty(user.PasswordHash) || !VerifyPassword(password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
-        return GenerateTokens(user.Id.ToString(), user.FullName, user.Role.ToString());
+        return GenerateTokens(user.Id.ToString(), user.FullName, user.Role.ToString(), user.MustChangePassword);
+    }
+
+    public async Task ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken ct = default)
+    {
+        var user = await _users.GetByIdAsync(Guid.Parse(userId), ct)
+            ?? throw new UnauthorizedAccessException("User not found.");
+
+        if (!VerifyPassword(currentPassword, user.PasswordHash ?? ""))
+            throw new UnauthorizedAccessException("Current password is incorrect.");
+
+        user.PasswordHash = HashPassword(newPassword);
+        user.MustChangePassword = false;
+        await _users.UpdateAsync(user, ct);
     }
 
     public Task<AuthResult> RefreshTokenAsync(string refreshToken, CancellationToken ct = default)
@@ -67,7 +80,7 @@ public class AuthService : IAuthService
     public bool VerifyPassword(string password, string hash)
         => BCrypt.Net.BCrypt.Verify(password, hash);
 
-    private AuthResult GenerateTokens(string userId, string fullName, string role)
+    private AuthResult GenerateTokens(string userId, string fullName, string role, bool mustChangePassword = false)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -94,6 +107,6 @@ public class AuthService : IAuthService
         var refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         RefreshTokens[refreshToken] = (userId, DateTime.UtcNow.AddDays(_jwt.RefreshTokenExpiryDays));
 
-        return new AuthResult(accessToken, refreshToken, expiry, userId, fullName, role);
+        return new AuthResult(accessToken, refreshToken, expiry, userId, fullName, role, mustChangePassword);
     }
 }

@@ -217,7 +217,8 @@ public static class MigrationHelper
                 "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS account_holder VARCHAR(50)",
                 "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS channel_partner_name VARCHAR(150)",
                 "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS account_customer VARCHAR(15)",
-                "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS account_product VARCHAR(10)"
+                "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS account_product VARCHAR(10)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE"
             };
             foreach (var s in sql) await db.ExecuteAsync(s);
             app.Logger.LogInformation("Auto-migration complete.");

@@ -8,6 +8,7 @@ import AccountDashboard from './pages/AccountDashboard'
 import LoginPage from './pages/LoginPage'
 import { ReportsPage, AgentsPage, KbPage, SettingsPage } from './pages/OtherPages'
 import TicketReport from './pages/TicketReport'
+import ChangePasswordPage from './pages/ChangePasswordPage'
 import { ToastContainer } from './components/ui'
 import { useAuth, useTheme } from './store'
 
@@ -56,6 +57,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/change-password" element={<ChangePasswordPage />} />
           <Route path="/*" element={
             <RequireAuth>
               <AppShell />

@@ -69,6 +69,28 @@ public class AuthController : ControllerBase
         var result = await _auth.RefreshTokenAsync(refreshToken, ct);
         return Ok(result);
     }
+
+    /// <summary>Change password — required on first login when MustChangePassword is true.</summary>
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? throw new UnauthorizedAccessException("Not authenticated.");
+            await _auth.ChangePasswordAsync(userId, request.CurrentPassword, request.NewPassword, ct);
+            return Ok(new { message = "Password changed successfully." });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 }
 
 // ── Users ─────────────────────────────────────────────────────────────────

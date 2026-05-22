@@ -23,6 +23,7 @@ public interface IAuthService
 {
     Task<AuthResult> LoginAsync(string email, string password, CancellationToken ct = default);
     Task<AuthResult> RefreshTokenAsync(string refreshToken, CancellationToken ct = default);
+    Task ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken ct = default);
     string HashPassword(string password);
     bool VerifyPassword(string password, string hash);
 }
