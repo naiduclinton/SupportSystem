@@ -22,22 +22,23 @@ public class UserRepository : IUserRepository
     {
         const string sql = @"
             SELECT id, email, full_name, role::text AS role, team_id, is_active,
-                   password_hash, last_login_at, created_at, updated_at, deleted_at
+                   password_hash, last_login_at, must_change_password, created_at, updated_at, deleted_at
             FROM users WHERE email = @Email AND deleted_at IS NULL";
         var row = await _db.QueryFirstOrDefaultAsync<dynamic>(sql, new { Email = email });
         if (row == null) return null;
         return new User
         {
-            Id           = row.id,
-            Email        = row.email,
-            FullName     = row.full_name,
-            Role         = Enum.Parse<UserRole>(row.role, true),
-            TeamId       = row.team_id,
-            IsActive     = row.is_active,
-            PasswordHash = row.password_hash,
-            LastLoginAt  = row.last_login_at,
-            CreatedAt    = row.created_at,
-            UpdatedAt    = row.updated_at,
+            Id                 = row.id,
+            Email              = row.email,
+            FullName           = row.full_name,
+            Role               = Enum.Parse<UserRole>(row.role, true),
+            TeamId             = row.team_id,
+            IsActive           = row.is_active,
+            PasswordHash       = row.password_hash,
+            LastLoginAt        = row.last_login_at,
+            MustChangePassword = row.must_change_password ?? false,
+            CreatedAt          = row.created_at,
+            UpdatedAt          = row.updated_at,
         };
     }
 
