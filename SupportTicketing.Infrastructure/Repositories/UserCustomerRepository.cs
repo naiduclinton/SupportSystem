@@ -14,8 +14,26 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        const string sql = "SELECT * FROM users WHERE id = @Id AND deleted_at IS NULL";
-        return await _db.QueryFirstOrDefaultAsync<User>(sql, new { Id = id });
+        const string sql = @"
+            SELECT id, email, full_name, role::text AS role, team_id, is_active,
+                   password_hash, last_login_at, must_change_password, created_at, updated_at
+            FROM users WHERE id = @Id AND deleted_at IS NULL";
+        var row = await _db.QueryFirstOrDefaultAsync<dynamic>(sql, new { Id = id });
+        if (row == null) return null;
+        return new User
+        {
+            Id                 = row.id,
+            Email              = row.email,
+            FullName           = row.full_name ?? string.Empty,
+            Role               = Enum.Parse<UserRole>(row.role?.ToString() ?? "agent", true),
+            TeamId             = row.team_id,
+            IsActive           = row.is_active,
+            PasswordHash       = row.password_hash,
+            LastLoginAt        = row.last_login_at,
+            MustChangePassword = row.must_change_password ?? false,
+            CreatedAt          = row.created_at,
+            UpdatedAt          = row.updated_at,
+        };
     }
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
