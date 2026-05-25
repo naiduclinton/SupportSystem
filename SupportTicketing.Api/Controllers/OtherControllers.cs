@@ -106,8 +106,37 @@ public class UsersController : ControllerBase
         _auth = auth;
     }
 
+    [HttpPost]
+    public async Task<IActionResult> CreateAgent([FromBody] CreateAgentRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var existing = await _users.GetByEmailAsync(request.Email, ct);
+            if (existing != null)
+                return Conflict(new { error = "An agent with this email already exists." });
+
+            var user = new SupportTicketing.Core.Entities.User
+            {
+                Email              = request.Email,
+                FullName           = request.FullName,
+                Role               = Enum.Parse<SupportTicketing.Core.Enums.UserRole>(request.Role, true),
+                IsActive           = true,
+                PasswordHash       = _auth.HashPassword(request.Password),
+                MustChangePassword = true,
+            };
+
+            await _users.AddAsync(user, ct);
+            return CreatedAtAction(nameof(GetById), new { id = user.Id },
+                new { user.Id, user.Email, user.FullName, role = user.Role.ToString() });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
     [HttpGet]
-        public async Task<IActionResult> GetAll(CancellationToken ct)
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var users = await _users.GetAllAsync(ct);
         return Ok(users);
