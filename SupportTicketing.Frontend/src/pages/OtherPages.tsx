@@ -1,6 +1,7 @@
 // v2 - add agent feature
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useQuery, useQueryClient } from 'react-query'
 import { Avatar } from '../components/ui'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -79,7 +80,18 @@ const STATUS_DOT: Record<string, string> = {
 }
 
 export function AgentsPage() {
+  const queryClient = useQueryClient()
   const [showInvite, setShowInvite] = useState(false)
+
+  // Fetch real agents from API
+  const { data: realAgents } = useQuery('real-agents', async () => {
+    const token = localStorage.getItem('access_token')
+    const res = await fetch('http://localhost:5000/api/users', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (!res.ok) return []
+    return res.json()
+  }, { staleTime: 30_000 })
   const [form, setForm] = useState({ fullName: '', email: '', password: '', role: 'agent' })
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
@@ -157,7 +169,7 @@ export function AgentsPage() {
                       setShowInvite(false)
                       setForm({ fullName: '', email: '', password: '', role: 'agent' })
                       setFormError('')
-                      alert(`Agent ${form.fullName} created successfully! They will be prompted to change their password on first login.`)
+                      queryClient.invalidateQueries('real-agents')
                     } catch (e: any) {
                       setFormError(e?.message ?? 'Failed to create agent.')
                     } finally {
@@ -176,23 +188,23 @@ export function AgentsPage() {
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        {AGENTS.map(a => (
+        {(realAgents && realAgents.length > 0 ? realAgents : AGENTS).map((a: any) => (
           <div key={a.id} className="card p-5">
             <div className="flex items-start gap-3">
               <div className="relative">
                 <Avatar name={a.fullName} size={40} />
-                <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-neutral-900 ${STATUS_DOT[a.status]}`} />
+                <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-neutral-900 ${a.status ? STATUS_DOT[a.status] : 'bg-emerald-400'}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">{a.fullName}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--ink-3)' }}>{a.role} · {a.team}</p>
+                <p className="text-xs mt-0.5 capitalize" style={{ color: 'var(--ink-3)' }}>{a.role ?? 'Agent'}{a.team ? ` · ${a.team}` : ''}</p>
                 <p className="text-xs mt-0.5" style={{ color: 'var(--ink-3)' }}>{a.email}</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-              <div className="text-center"><p className="font-mono font-medium text-emerald-500">{a.csat}%</p><p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>CSAT</p></div>
-              <div className="text-center"><p className="font-mono font-medium">{a.resolved}</p><p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>Resolved</p></div>
-              <div className="text-center"><p className="font-mono font-medium">{a.avgHours}h</p><p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>Avg resolve</p></div>
+              <div className="text-center"><p className="font-mono font-medium text-emerald-500">{a.csat ?? '—'}{a.csat ? '%' : ''}</p><p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>CSAT</p></div>
+              <div className="text-center"><p className="font-mono font-medium">{a.resolved ?? '—'}</p><p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>Resolved</p></div>
+              <div className="text-center"><p className="font-mono font-medium">{a.avgHours ? `${a.avgHours}h` : '—'}</p><p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>Avg resolve</p></div>
             </div>
           </div>
         ))}
