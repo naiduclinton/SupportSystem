@@ -142,13 +142,22 @@ export function AgentsPage() {
                     setSaving(true)
                     setFormError('')
                     try {
-                      const { agentsApi } = await import('../api')
-                      await agentsApi.create(form)
+                      const token = localStorage.getItem('access_token')
+                      const res = await fetch('http://localhost:5000/api/users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify(form),
+                      })
+                      if (!res.ok) {
+                        const err = await res.json().catch(() => ({}))
+                        throw new Error(err.error ?? `Error ${res.status}`)
+                      }
                       setShowInvite(false)
                       setForm({ fullName: '', email: '', password: '', role: 'agent' })
-                      alert(`Agent ${form.fullName} created successfully. They will be prompted to change their password on first login.`)
+                      setFormError('')
+                      alert(`Agent ${form.fullName} created successfully! They will be prompted to change their password on first login.`)
                     } catch (e: any) {
-                      setFormError(e?.response?.data?.error ?? 'Failed to create agent.')
+                      setFormError(e?.message ?? 'Failed to create agent.')
                     } finally {
                       setSaving(false)
                     }
