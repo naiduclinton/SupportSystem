@@ -155,30 +155,30 @@ export function AgentsPage() {
                   onClick={async () => {
                     setSaving(true)
                     setFormError('')
-                    try {
-                      const token = localStorage.getItem('access_token')
-                      const res = await fetch('http://localhost:5000/api/users', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                        body: JSON.stringify(form),
-                      })
+                    const token = localStorage.getItem('access_token')
+                    const agentName = form.fullName
+                    fetch('http://localhost:5000/api/users', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify(form),
+                    }).then(async res => {
                       if (!res.ok) {
                         const text = await res.text().catch(() => '')
                         let errMsg = `Error ${res.status}`
                         try { errMsg = JSON.parse(text).error ?? errMsg } catch {}
-                        throw new Error(errMsg)
+                        setFormError(errMsg)
+                      } else {
+                        setForm({ fullName: '', email: '', password: '', role: 'agent' })
+                        setFormError('')
+                        setShowInvite(false)
+                        queryClient.invalidateQueries('real-agents')
+                        toast(`Agent ${agentName} created successfully`, 'success')
                       }
-                      const agentName = form.fullName
-                      setShowInvite(false)
-                      setForm({ fullName: '', email: '', password: '', role: 'agent' })
-                      setFormError('')
-                      await queryClient.invalidateQueries('real-agents')
-                      toast(`Agent ${agentName} created successfully`, 'success')
-                    } catch (e: any) {
+                    }).catch(e => {
                       setFormError(e?.message ?? 'Failed to create agent.')
-                    } finally {
+                    }).finally(() => {
                       setSaving(false)
-                    }
+                    })
                   }}
                 >
                   {saving ? <span className="animate-spin-slow">⟳</span> : <i className="fa-solid fa-user-plus text-xs" />}
