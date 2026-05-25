@@ -149,8 +149,10 @@ export function AgentsPage() {
                         body: JSON.stringify(form),
                       })
                       if (!res.ok) {
-                        const err = await res.json().catch(() => ({}))
-                        throw new Error(err.error ?? `Error ${res.status}`)
+                        const text = await res.text().catch(() => '')
+                        let errMsg = `Error ${res.status}`
+                        try { errMsg = JSON.parse(text).error ?? errMsg } catch {}
+                        throw new Error(errMsg)
                       }
                       setShowInvite(false)
                       setForm({ fullName: '', email: '', password: '', role: 'agent' })
