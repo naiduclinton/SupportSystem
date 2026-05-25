@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery, useQueryClient } from 'react-query'
+import { useToasts } from '../store'
 import { Avatar } from '../components/ui'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -81,6 +82,7 @@ const STATUS_DOT: Record<string, string> = {
 
 export function AgentsPage() {
   const queryClient = useQueryClient()
+  const { add: toast } = useToasts()
   const [showInvite, setShowInvite] = useState(false)
 
   // Fetch real agents from API
@@ -166,10 +168,12 @@ export function AgentsPage() {
                         try { errMsg = JSON.parse(text).error ?? errMsg } catch {}
                         throw new Error(errMsg)
                       }
+                      const agentName = form.fullName
                       setShowInvite(false)
                       setForm({ fullName: '', email: '', password: '', role: 'agent' })
                       setFormError('')
-                      queryClient.invalidateQueries('real-agents')
+                      await queryClient.invalidateQueries('real-agents')
+                      toast(`Agent ${agentName} created successfully`, 'success')
                     } catch (e: any) {
                       setFormError(e?.message ?? 'Failed to create agent.')
                     } finally {

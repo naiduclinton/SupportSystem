@@ -33,7 +33,7 @@ export const useAuth = create<AuthState>()(
         set({ userId: null, fullName: null, role: null, accessToken: null, mustChangePassword: false })
       }
     }),
-    { name: 'auth-store', partialize: s => ({ userId: s.userId, fullName: s.fullName, role: s.role, mustChangePassword: s.mustChangePassword }) }
+    { name: 'auth-store', partialize: s => ({ userId: s.userId, fullName: s.fullName, role: s.role }) }
   )
 )
 
